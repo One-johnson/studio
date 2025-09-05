@@ -73,12 +73,12 @@ export default function HomePage() {
                 </CarouselItem>
               ) : recentPhotos.length > 0 ? (
                  recentPhotos.map((photo) => (
-                  <CarouselItem key={photo.id}>
+                  <CarouselItem key={photo.id} className="relative">
                     <Image
                       src={photo.url}
                       alt={photo.title || "Hero background"}
                       fill
-                      className="object-cover"
+                      className="object-cover -z-10"
                       priority
                       data-ai-hint="dramatic landscape"
                     />
