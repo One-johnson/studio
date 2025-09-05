@@ -39,6 +39,7 @@ const menuItems = [
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   { href: '/admin/theme', label: 'Theme', icon: Palette },
+  { href: '/admin/settings', label: 'Settings', icon: Cog },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
