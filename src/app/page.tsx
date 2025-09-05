@@ -73,7 +73,7 @@ export default function HomePage() {
                 </CarouselItem>
               ) : recentPhotos.length > 0 ? (
                  recentPhotos.map((photo) => (
-                  <CarouselItem key={photo.id} className="transition-opacity duration-1000">
+                  <CarouselItem key={photo.id}>
                     <Image
                       src={photo.url}
                       alt={photo.title || "Hero background"}
