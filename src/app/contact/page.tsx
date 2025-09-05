@@ -1,16 +1,17 @@
 'use client';
 
-import { useFormState, useForm } from 'react-dom';
+import { useFormState } from 'react-dom';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { contactFormSchema, submitContactForm } from '@/lib/actions';
+import { submitContactForm } from '@/lib/actions';
+import { contactFormSchema, type ContactFormState } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
-import type { ContactFormState } from '@/lib/actions';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { z } from 'zod';
