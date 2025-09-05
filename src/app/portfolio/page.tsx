@@ -1,31 +1,90 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, Suspense, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { galleries, photos as allPhotos, Photo } from '@/lib/data';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2, Search } from 'lucide-react';
+import { searchPhotos } from '@/ai/flows/ai-search-flow';
+import { useToast } from '@/hooks/use-toast';
 
 function PortfolioGrid() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'all';
 
-  const [filter, setFilter] = useState(initialCategory);
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Photo[] | null>(null);
+  const [isSearching, startSearchTransition] = useTransition();
+  const { toast } = useToast();
 
-  const filteredPhotos = useMemo(() => {
-    if (filter === 'all') {
+  const photosForCategory = useMemo(() => {
+    if (activeCategory === 'all') {
       return allPhotos;
     }
-    const gallery = galleries.find(g => g.category.toLowerCase() === filter);
+    const gallery = galleries.find(g => g.category.toLowerCase() === activeCategory);
     return gallery ? gallery.photos : [];
-  }, [filter]);
+  }, [activeCategory]);
+  
+  const displayedPhotos = searchResults ?? photosForCategory;
+
+  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setSearchResults(null); // Reset search if query is empty
+      return;
+    }
+
+    startSearchTransition(async () => {
+      try {
+        const photosToSearch = allPhotos.map(({ id, title }) => ({ id, title }));
+        const result = await searchPhotos({ query: searchQuery, photos: photosToSearch });
+        
+        const foundPhotos = allPhotos.filter(p => result.photoIds.includes(p.id));
+        setSearchResults(foundPhotos);
+
+        if (foundPhotos.length === 0) {
+            toast({
+                title: "No results",
+                description: "The AI couldn't find any photos matching your search."
+            });
+        }
+      } catch (error) {
+        console.error("AI search failed:", error);
+        toast({
+          title: 'Search Failed',
+          description: 'An error occurred while searching. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    });
+  };
 
   return (
     <>
-      <div className="text-center mb-12">
-        <Tabs value={filter} onValueChange={setFilter} className="inline-block">
+      <div className="flex flex-col items-center gap-8 mb-12">
+        <form onSubmit={handleSearch} className="w-full max-w-lg flex gap-2">
+          <Input 
+            placeholder="e.g., 'serene beach sunset' or 'joyful wedding moments'"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Button type="submit" disabled={isSearching}>
+            {isSearching ? <Loader2 className="animate-spin" /> : <Search />}
+            <span className="sr-only">Search</span>
+          </Button>
+        </form>
+      
+        <Tabs value={activeCategory} onValueChange={(value) => {
+            setActiveCategory(value);
+            setSearchResults(null); // Reset search when changing category
+            setSearchQuery('');
+        }} className="inline-block">
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             {galleries.map(g => (
@@ -38,7 +97,7 @@ function PortfolioGrid() {
       </div>
 
       <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-        {filteredPhotos.map((photo, index) => (
+        {displayedPhotos.map((photo, index) => (
           <Dialog key={photo.id}>
             <DialogTrigger asChild>
               <div className="overflow-hidden rounded-lg cursor-pointer group break-inside-avoid">
@@ -66,6 +125,12 @@ function PortfolioGrid() {
           </Dialog>
         ))}
       </div>
+      {searchResults && searchResults.length === 0 && (
+          <div className="text-center py-16">
+              <h3 className="text-2xl font-headline">No Photos Found</h3>
+              <p className="text-muted-foreground mt-2">Try a different search query or browse the categories.</p>
+          </div>
+      )}
     </>
   );
 }
@@ -78,7 +143,7 @@ export default function PortfolioPage() {
           Our Portfolio
         </h1>
         <p className="text-center text-lg text-muted-foreground max-w-2xl mx-auto mb-12">
-          A collection of moments captured with passion. Browse through our work and see the world through our eyes.
+          A collection of moments captured with passion. Use our AI search to find exactly what you're looking for, or browse our curated galleries.
         </p>
         <Suspense fallback={<div>Loading...</div>}>
           <PortfolioGrid />
