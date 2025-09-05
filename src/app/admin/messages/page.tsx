@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, deleteDoc, query, orderBy, Timestamp } from 'firebase/firestore';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -35,7 +35,7 @@ export default function AdminMessagesPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     setLoading(true);
     try {
       const q = query(collection(db, "contact-messages"), orderBy("createdAt", "desc"));
@@ -55,11 +55,11 @@ export default function AdminMessagesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -123,7 +123,7 @@ export default function AdminMessagesPage() {
                     <TableCell className="max-w-sm truncate">{message.message}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {message.createdAt.toDate().toLocaleDateString()}
+                        {message.createdAt?.toDate().toLocaleDateString() ?? 'N/A'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
