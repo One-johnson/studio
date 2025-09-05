@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import PublicLayout from '@/components/layout/PublicLayout';
@@ -11,14 +11,14 @@ import { submitContactForm } from '@/lib/actions';
 import { contactFormSchema, type ContactFormState } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { z } from 'zod';
 
 export default function ContactPage() {
   const initialState: ContactFormState = { message: '', success: false };
-  const [state, formAction] = useFormState(submitContactForm, initialState);
+  const [state, formAction] = useActionState(submitContactForm, initialState);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof contactFormSchema>>({
