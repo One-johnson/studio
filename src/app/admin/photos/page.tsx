@@ -12,21 +12,84 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical } from 'lucide-react';
+import { Trash2, Upload, GripVertical, Loader2, ShieldOff } from 'lucide-react';
 import { galleries, photos as initialPhotos } from '@/lib/data';
+import { moderateImage } from '@/ai/flows/content-moderation-flow';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 
 export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState(initialPhotos);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isModerating, setIsModerating] = useState(false);
+  const [moderationError, setModerationError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsModerating(true);
+    setModerationError(null);
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      try {
+        const dataUri = reader.result as string;
+        const result = await moderateImage({ photoDataUri: dataUri });
+        
+        if (!result.isAppropriate) {
+          setModerationError(result.reason || 'The image was flagged as inappropriate.');
+        } else {
+          // In a real app, you might want to proceed with a preview
+          // or enable the upload button here.
+          toast({
+            title: 'Image approved',
+            description: 'The image passed moderation and is ready for upload.',
+          });
+        }
+      } catch (error) {
+        console.error("Moderation failed:", error);
+        setModerationError('An error occurred during moderation. Please try again.');
+      } finally {
+        setIsModerating(false);
+      }
+    };
+    reader.onerror = (error) => {
+        console.error("File reading failed:", error);
+        setModerationError('Failed to read the image file.');
+        setIsModerating(false);
+    };
+  };
 
   const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (moderationError) {
+      toast({
+        title: 'Upload Failed',
+        description: 'Cannot upload an image that has been flagged.',
+        variant: 'destructive',
+      });
+      return;
+    }
     // In a real app, this would handle file upload to a storage service
     // and update the database.
     console.log('Uploading photo...');
+    toast({
+        title: 'Upload Successful!',
+        description: 'Your photo has been added to the gallery.',
+    })
     setIsUploadDialogOpen(false);
+    setModerationError(null);
     // Here you would add the new photo to the `photos` state.
   };
+  
+  const resetDialog = () => {
+    setModerationError(null);
+    setIsModerating(false);
+  }
 
   return (
     <AdminLayout>
@@ -36,7 +99,10 @@ export default function AdminPhotosPage() {
             <CardTitle>Photo Management</CardTitle>
             <CardDescription>Upload, categorize, and manage your photos.</CardDescription>
           </div>
-          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => {
+            setIsUploadDialogOpen(isOpen);
+            if (!isOpen) resetDialog();
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Upload className="mr-2 h-4 w-4" />
@@ -53,8 +119,23 @@ export default function AdminPhotosPage() {
                     <Label htmlFor="photo-file" className="text-right">
                       Photo
                     </Label>
-                    <Input id="photo-file" type="file" className="col-span-3" />
+                    <Input id="photo-file" type="file" className="col-span-3" onChange={handleFileChange} accept="image/*" />
                   </div>
+                   {isModerating && (
+                    <div className="col-span-4 flex items-center justify-center p-4">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <span>Analyzing image...</span>
+                    </div>
+                  )}
+                  {moderationError && (
+                    <Alert variant="destructive" className="col-span-4">
+                      <ShieldOff className="h-4 w-4" />
+                      <AlertTitle>Image Flagged</AlertTitle>
+                      <AlertDescription>
+                        {moderationError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="title" className="text-right">
                       Title
@@ -78,7 +159,10 @@ export default function AdminPhotosPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Upload</Button>
+                  <Button type="submit" disabled={isModerating || !!moderationError}>
+                    {isModerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                    Upload
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
