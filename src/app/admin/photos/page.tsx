@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import type { Photo, Gallery } from '@/lib/types';
 import {
   AlertDialog,
@@ -392,20 +392,29 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
   };
 
   const uploadFile = (file: File, onProgress: (progress: number) => void): Promise<string> => {
-     return new Promise(async (resolve, reject) => {
-        try {
-            const storageRef = ref(storage, `photos/${Date.now()}-${file.name}`);
-            // Note: Firebase JS SDK v9 doesn't have direct progress reporting for uploadBytes.
-            // For a real-world app with progress, you'd use uploadBytesResumable.
-            // Here, we'll just simulate it.
-            onProgress(50);
-            const uploadResult = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadResult.ref);
-            onProgress(100);
-            resolve(downloadURL);
-        } catch(error) {
+     return new Promise((resolve, reject) => {
+        const storageRef = ref(storage, `photos/${Date.now()}-${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            onProgress(progress);
+          }, 
+          (error) => {
+            console.error("Upload failed:", error);
             reject(error);
-        }
+          }, 
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              onProgress(100);
+              resolve(downloadURL);
+            } catch (error) {
+              reject(error)
+            }
+          }
+        );
      });
   };
 
@@ -496,7 +505,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
             {isProcessing && (
               <div className="col-span-4 flex items-center justify-center p-4">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                <span>Uploading and analyzing... ({uploadState?.progress || 0}%)</span>
+                <span>Uploading and analyzing... ({Math.round(uploadState?.progress || 0)}%)</span>
               </div>
             )}
             {moderationError && (
