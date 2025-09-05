@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, Suspense, useTransition, useEffect } from 'react';
@@ -7,7 +8,7 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { getGalleries, getPhotos } from '@/lib/data';
 import type { Gallery, Photo } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search } from 'lucide-react';
@@ -147,6 +148,7 @@ function PortfolioGrid() {
               </div>
             </DialogTrigger>
             <DialogContent className="max-w-4xl p-0 border-0">
+               <DialogTitle className="sr-only">{photo.title}</DialogTitle>
                <Image
                   src={photo.url}
                   alt={photo.title}
