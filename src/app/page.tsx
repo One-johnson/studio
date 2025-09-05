@@ -71,28 +71,23 @@ export default function HomePage() {
                 <CarouselItem>
                   <Skeleton className="w-full h-full bg-muted" />
                 </CarouselItem>
-              ) : recentPhotos.map((photo) => (
-                <CarouselItem key={photo.id} className="transition-opacity duration-1000">
-                  <Image
-                    src={photo.url}
-                    alt={photo.title || "Hero background"}
-                    fill
-                    className="object-cover"
-                    priority
-                    data-ai-hint="dramatic landscape"
-                  />
-                </CarouselItem>
-              ))}
-               {!loading && recentPhotos.length === 0 && (
+              ) : recentPhotos.length > 0 ? (
+                 recentPhotos.map((photo) => (
+                  <CarouselItem key={photo.id} className="transition-opacity duration-1000">
+                    <Image
+                      src={photo.url}
+                      alt={photo.title || "Hero background"}
+                      fill
+                      className="object-cover"
+                      priority
+                      data-ai-hint="dramatic landscape"
+                    />
+                  </CarouselItem>
+                ))
+              ) : (
                 <CarouselItem>
                   <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-foreground p-8">
-                     <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight text-primary">
-                        Clustergh
-                    </h1>
-                     <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body text-muted-foreground">
-                        Your professional photography portfolio awaits.
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">Upload photos in the admin panel to get started.</p>
+                     <p className="mt-2 text-sm text-muted-foreground">Upload photos in the admin panel to see them here.</p>
                   </div>
                 </CarouselItem>
               )}
@@ -104,7 +99,7 @@ export default function HomePage() {
                 </>
             )}
           </Carousel>
-          { !loading && recentPhotos.length > 0 && 
+          { !loading &&
             <>
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="relative z-10 p-4 fade-in">
