@@ -2,7 +2,9 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { getAuth, onAuthStateChanged, signOut, User } from 'firebase/auth'
+import { app } from '@/lib/firebase'
 import {
   Camera,
   LayoutDashboard,
@@ -11,6 +13,7 @@ import {
   MessageSquare,
   Palette,
   LogOut,
+  Loader2,
 } from 'lucide-react'
 import {
   SidebarProvider,
@@ -26,6 +29,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { useToast } from '@/hooks/use-toast'
 
 const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,6 +41,55 @@ const menuItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const auth = getAuth(app)
+  const { toast } = useToast()
+  
+  const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        router.push('/login');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [auth, router]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+      })
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+      toast({
+        title: 'Logout Failed',
+        description: 'An error occurred during logout. Please try again.',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    )
+  }
+  
+  if (!user) {
+     return null; // The redirect is handled in the useEffect
+  }
 
   return (
     <SidebarProvider>
@@ -71,11 +124,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Separator className="my-2" />
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: 'Logout', side: 'right' }}>
-                <Link href="/login">
-                  <LogOut />
-                  <span>Logout</span>
-                </Link>
+              <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Logout', side: 'right' }}>
+                <LogOut />
+                <span>Logout</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
