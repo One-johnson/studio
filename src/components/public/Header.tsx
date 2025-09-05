@@ -25,7 +25,7 @@ export default function Header() {
         <div className="flex w-full items-center justify-between">
           
           {/* Left Side: Brand */}
-          <Link href="/" className="flex items-center gap-2 font-headline text-xl">
+          <Link href="/" className="flex items-center gap-2 font-headline text-xl pl-12">
             <Camera className="h-6 w-6 text-primary" />
             <span>Clustergh</span>
           </Link>

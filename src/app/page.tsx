@@ -28,7 +28,7 @@ export default function HomePage() {
   const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const fadePlugin = useRef(
-    Fade({ crossfade: true, inViewThreshold: 0.1 })
+    Fade({ inViewThreshold: 0.1 })
   )
 
   useEffect(() => {
