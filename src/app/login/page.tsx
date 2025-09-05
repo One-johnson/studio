@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -17,8 +18,9 @@ export default function LoginPage() {
   const auth = getAuth(app);
   const { toast } = useToast();
   
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -66,7 +68,24 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="relative">
+                <Input 
+                  id="password" 
+                  type={showPassword ? 'text' : 'password'} 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+                <Button 
+                  type="button"
+                  variant="ghost" 
+                  size="icon"
+                  className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground"
+                  onClick={() => setShowPassword(prev => !prev)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <Button type="submit" className="w-full font-headline" disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : 'Login'}
