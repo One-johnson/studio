@@ -1,111 +1,85 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Camera, Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+import { useState } from 'react';
 
-const navItems = [
+const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/portfolio', label: 'Portfolio' },
-  { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
+  { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
 
 export default function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 w-full transition-all duration-300',
-        isScrolled ? 'bg-background/80 backdrop-blur-sm border-b' : 'bg-transparent'
-      )}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center gap-2 text-xl font-headline">
-            <Camera className="w-6 h-6 text-primary" />
-            <span>SnapVerse</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:text-primary',
-                  pathname === item.href ? 'text-primary' : 'text-foreground/80'
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
-                <Link href="/login">Admin Login</Link>
-            </Button>
-            <div className="md:hidden">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <div className="p-4">
-                <Link href="/" className="flex items-center gap-2 text-xl font-headline mb-8">
-                  <Camera className="w-6 h-6 text-primary" />
-                  <span>SnapVerse</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <Link href="/" className="flex items-center gap-2 mr-6">
+          <Camera className="h-6 w-6 text-primary" />
+          <span className="font-bold font-headline text-lg">clustergh</span>
+        </Link>
+        <nav className="hidden md:flex md:items-center md:gap-6 text-sm font-medium">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'transition-colors hover:text-foreground/80',
+                pathname === link.href ? 'text-foreground' : 'text-foreground/60'
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex flex-1 items-center justify-end">
+           <Button asChild variant="secondary" className="hidden md:flex">
+             <Link href="/login">Admin Login</Link>
+           </Button>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <div className="flex flex-col gap-6 p-6">
+                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+                    <Camera className="h-6 w-6 text-primary" />
+                    <span className="font-bold font-headline text-lg">clustergh</span>
                 </Link>
-                  <nav className="flex flex-col gap-6">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
+                <nav className="flex flex-col gap-4">
+                    {navLinks.map((link) => (
+                        <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
                         className={cn(
-                          'text-lg font-medium transition-colors hover:text-primary',
-                          pathname === item.href ? 'text-primary' : 'text-foreground'
+                            'text-lg',
+                            pathname === link.href ? 'text-primary font-semibold' : 'text-muted-foreground'
                         )}
-                      >
-                        {item.label}
-                      </Link>
+                        >
+                        {link.label}
+                        </Link>
                     ))}
-                     <Button variant="outline" size="sm" asChild className="mt-4">
-                        <Link href="/login">Admin Login</Link>
-                    </Button>
-                  </nav>
-                </div>
-              </SheetContent>
-            </Sheet>
-            </div>
-          </div>
+                </nav>
+                 <Button asChild variant="outline" onClick={() => setIsOpen(false)}>
+                    <Link href="/login">Admin Login</Link>
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

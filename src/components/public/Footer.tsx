@@ -1,41 +1,24 @@
+
 import Link from 'next/link';
-import { Camera, Instagram, Twitter, Facebook } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Camera } from 'lucide-react';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="bg-card border-t">
+    <footer className="border-t bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 text-xl font-headline">
-            <Camera className="w-6 h-6 text-primary" />
-            <span>SnapVerse</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </a>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                <Facebook className="h-5 w-5" />
-                <span className="sr-only">Facebook</span>
-              </a>
-            </Button>
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="flex items-center gap-2 mb-4 md:mb-0">
+            <Camera className="h-6 w-6 text-primary" />
+            <span className="font-bold font-headline text-lg">clustergh</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} SnapVerse. All Rights Reserved.
+            &copy; {new Date().getFullYear()} clustergh. All Rights Reserved.
           </p>
+          <nav className="flex gap-4 mt-4 md:mt-0">
+            <Link href="/portfolio" className="text-sm hover:text-primary transition-colors">Portfolio</Link>
+            <Link href="/about" className="text-sm hover:text-primary transition-colors">About</Link>
+            <Link href="/contact" className="text-sm hover:text-primary transition-colors">Contact</Link>
+          </nav>
         </div>
       </div>
     </footer>
