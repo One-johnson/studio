@@ -14,7 +14,7 @@ import { firebaseConfig } from '@/lib/firebase';
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false);
-  const [origin, setOrigin] = useState('');
+  const [origin, setOrigin] = useState('https://app.studio.dev');
   const { toast } = useToast();
 
   const handleConfigureCORS = async () => {
@@ -61,7 +61,9 @@ export default function AdminSettingsPage() {
                         <ShieldCheck className="h-4 w-4" />
                         <AlertTitle>What is this?</AlertTitle>
                         <AlertDescription>
-                            To allow your website to upload photos, you must grant it permission. Enter the main URL of your website below. You only need to do this once.
+                            To allow your website to upload photos from the browser, you must grant it permission by configuring CORS (Cross-Origin Resource Sharing). 
+                            Since you are using Firebase Studio, the correct URL has been pre-filled for you.
+                            You only need to do this once. If you deploy your site to a different URL later, you will need to add that URL in the Google Cloud Console.
                         </AlertDescription>
                     </Alert>
                     <div className="space-y-2">
