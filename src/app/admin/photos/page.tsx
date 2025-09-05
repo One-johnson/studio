@@ -12,9 +12,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical, Loader2, ShieldOff } from 'lucide-react';
+import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2 } from 'lucide-react';
 import { galleries, photos as initialPhotos } from '@/lib/data';
 import { moderateImage } from '@/ai/flows/content-moderation-flow';
+import { generateCaption } from '@/ai/flows/generate-caption-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,6 +25,8 @@ export default function AdminPhotosPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isModerating, setIsModerating] = useState(false);
   const [moderationError, setModerationError] = useState<string | null>(null);
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
+  const [title, setTitle] = useState('');
   const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,6 +35,8 @@ export default function AdminPhotosPage() {
 
     setIsModerating(true);
     setModerationError(null);
+    setTitle('');
+    setIsGeneratingCaption(false);
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -43,12 +48,28 @@ export default function AdminPhotosPage() {
         if (!result.isAppropriate) {
           setModerationError(result.reason || 'The image was flagged as inappropriate.');
         } else {
-          // In a real app, you might want to proceed with a preview
-          // or enable the upload button here.
           toast({
             title: 'Image approved',
-            description: 'The image passed moderation and is ready for upload.',
+            description: 'The image passed moderation. Now generating a caption...',
           });
+          setIsGeneratingCaption(true);
+          try {
+            const captionResult = await generateCaption({ photoDataUri: dataUri });
+            setTitle(captionResult.title);
+            toast({
+              title: 'Caption Generated!',
+              description: 'An AI-powered title has been created for your photo.',
+            });
+          } catch (captionError) {
+             console.error("Caption generation failed:", captionError);
+             toast({
+                title: 'Captioning Failed',
+                description: 'Could not generate a caption. Please enter one manually.',
+                variant: 'destructive'
+             })
+          } finally {
+            setIsGeneratingCaption(false);
+          }
         }
       } catch (error) {
         console.error("Moderation failed:", error);
@@ -82,13 +103,14 @@ export default function AdminPhotosPage() {
         description: 'Your photo has been added to the gallery.',
     })
     setIsUploadDialogOpen(false);
-    setModerationError(null);
-    // Here you would add the new photo to the `photos` state.
+    resetDialog();
   };
   
   const resetDialog = () => {
     setModerationError(null);
     setIsModerating(false);
+    setIsGeneratingCaption(false);
+    setTitle('');
   }
 
   return (
@@ -140,8 +162,14 @@ export default function AdminPhotosPage() {
                     <Label htmlFor="title" className="text-right">
                       Title
                     </Label>
-                    <Input id="title" placeholder="e.g., Sunset Over The Lake" className="col-span-3" />
+                    <Input id="title" placeholder="e.g., Sunset Over The Lake" className="col-span-3" value={title} onChange={(e) => setTitle(e.target.value)} />
                   </div>
+                   {isGeneratingCaption && (
+                    <div className="col-span-4 flex items-center text-sm text-muted-foreground">
+                        <Wand2 className="mr-2 h-4 w-4 animate-pulse" />
+                        <span>Generating AI-powered caption...</span>
+                    </div>
+                   )}
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="category" className="text-right">
                       Category
@@ -159,8 +187,8 @@ export default function AdminPhotosPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={isModerating || !!moderationError}>
-                    {isModerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  <Button type="submit" disabled={isModerating || isGeneratingCaption || !!moderationError}>
+                    {isModerating || isGeneratingCaption ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     Upload
                   </Button>
                 </DialogFooter>
