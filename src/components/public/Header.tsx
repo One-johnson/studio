@@ -3,14 +3,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Camera, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+import { Menu, Camera } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -22,61 +19,60 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <Camera className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline text-lg">Clustergh</span>
-        </Link>
-        <div className="hidden md:flex flex-1 items-center justify-end space-x-6">
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`transition-colors hover:text-primary ${
-                  pathname === link.href ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <Camera className="h-6 w-6 text-primary" />
+            <span className="font-bold font-headline text-lg">
+              Clustergh
+            </span>
+          </Link>
         </div>
-
-        <div className="flex md:hidden flex-1 justify-end">
-           <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'transition-colors hover:text-foreground/80',
+                pathname === link.href ? 'text-foreground' : 'text-foreground/60'
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex flex-1 items-center justify-end gap-2 md:hidden">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu />
-                <span className="sr-only">Open menu</span>
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
-              <div className="p-4">
-                 <div className="flex justify-between items-center mb-6">
-                     <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
-                        <Camera className="h-6 w-6 text-primary" />
-                        <span className="font-bold font-headline text-lg">Clustergh</span>
-                    </Link>
-                 </div>
-                <nav className="flex flex-col space-y-4">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`text-lg hover:text-primary ${
+            <SheetContent side="left">
+              <div className="flex flex-col gap-4 py-6">
+                 <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsOpen(false)}>
+                    <Camera className="h-6 w-6 text-primary" />
+                    <span className="font-bold font-headline text-lg">Clustergh</span>
+                  </Link>
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                        'text-lg font-medium',
                         pathname === link.href ? 'text-primary' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
+                    )}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
               </div>
             </SheetContent>
           </Sheet>

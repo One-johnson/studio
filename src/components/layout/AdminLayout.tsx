@@ -94,11 +94,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-            <Camera className="w-6 h-6 text-sidebar-primary" />
-            <span className="text-xl font-headline font-semibold text-sidebar-foreground">
-              Clustergh
-            </span>
+          <div className="flex items-center justify-between p-2">
+            <div className="flex items-center gap-2">
+              <Camera className="w-6 h-6 text-sidebar-primary" />
+              <span className="text-xl font-headline font-semibold text-sidebar-foreground">
+                Clustergh
+              </span>
+            </div>
+            <SidebarTrigger className="md:hidden"/>
           </div>
         </SidebarHeader>
         <SidebarContent className="p-2">
@@ -133,7 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
-          <SidebarTrigger className="md:hidden"/>
+          <SidebarTrigger className="hidden md:flex"/>
           <div className="flex-1">
             <h1 className="text-lg font-semibold font-headline">
               {menuItems.find(item => item.href === pathname)?.label || 'Admin'}
