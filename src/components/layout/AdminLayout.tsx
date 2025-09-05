@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-2 p-2">
             <Camera className="w-6 h-6 text-sidebar-primary" />
             <span className="text-xl font-headline font-semibold text-sidebar-foreground">
-              SnapVerse
+              Clustergh
             </span>
           </div>
         </SidebarHeader>

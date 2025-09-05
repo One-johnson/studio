@@ -80,7 +80,7 @@ export default function HomePage() {
                 <CarouselItem>
                   <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-foreground p-8">
                      <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight text-primary">
-                        SnapVerse
+                        Clustergh
                     </h1>
                      <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body text-muted-foreground">
                         Your professional photography portfolio awaits.
@@ -102,7 +102,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="relative z-10 p-4 fade-in">
                     <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight">
-                    SnapVerse
+                    Clustergh
                     </h1>
                     <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body">
                     {homepageContent?.heroTagline}
@@ -178,5 +178,3 @@ export default function HomePage() {
     </PublicLayout>
   );
 }
-
-    

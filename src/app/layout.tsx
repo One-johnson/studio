@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Belleza, Inter } from 'next/font/google';
+import CustomCursor from '@/components/public/CustomCursor';
 
 const belleza = Belleza({
   subsets: ['latin'],
@@ -15,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'SnapVerse - Modern Photography Portfolio',
+  title: 'Clustergh - Modern Photography Portfolio',
   description: 'A modern photography website to showcase beautiful portfolios.',
 };
 
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${belleza.variable} ${inter.variable} dark`} suppressHydrationWarning>
       <body>
+        <CustomCursor />
         {children}
         <Toaster />
       </body>
