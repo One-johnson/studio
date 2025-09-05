@@ -46,6 +46,7 @@ export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   
   const { toast } = useToast();
@@ -75,6 +76,7 @@ export default function AdminPhotosPage() {
   }, []);
 
   const handleDeletePhoto = async (photo: Photo) => {
+    setIsProcessing(true);
     try {
       await deleteDoc(doc(db, "photos", photo.id));
       const imageRef = ref(storage, photo.url);
@@ -94,10 +96,13 @@ export default function AdminPhotosPage() {
     } catch (error) {
       console.error("Error deleting photo:", error);
       toast({ title: "Error", description: "Failed to delete photo.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
   const handleBulkDelete = async () => {
+    setIsProcessing(true);
     const batch = writeBatch(db);
     
     try {
@@ -129,10 +134,13 @@ export default function AdminPhotosPage() {
     } catch (error) {
         console.error("Error deleting photos:", error);
         toast({ title: "Error", description: "Failed to delete photos.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
     }
   }
 
   const handleUpdatePhoto = async (photoId: string, newTitle: string, newCategory: string) => {
+    setIsProcessing(true);
     try {
         const batch = writeBatch(db);
         
@@ -162,6 +170,8 @@ export default function AdminPhotosPage() {
     } catch(error) {
         console.error("Error updating photo:", error);
         toast({ title: "Error", description: "Failed to update photo.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
     }
   }
 
@@ -220,7 +230,7 @@ export default function AdminPhotosPage() {
                 <span className="text-sm text-muted-foreground">{selectedPhotos.length} selected</span>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
+                    <Button variant="destructive" size="sm" disabled={isProcessing}>
                       <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
                     </Button>
                   </AlertDialogTrigger>
@@ -233,7 +243,10 @@ export default function AdminPhotosPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                      <AlertDialogAction onClick={handleBulkDelete} disabled={isProcessing}>
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -260,6 +273,7 @@ export default function AdminPhotosPage() {
                 onEdit={handleUpdatePhoto} 
                 selectedPhotos={selectedPhotos}
                 onSelectionChange={setSelectedPhotos}
+                isProcessing={isProcessing}
               />
             </TabsContent>
 
@@ -274,6 +288,7 @@ export default function AdminPhotosPage() {
                           onEdit={handleUpdatePhoto}
                           selectedPhotos={selectedPhotos}
                           onSelectionChange={setSelectedPhotos}
+                          isProcessing={isProcessing}
                         />
                     </TabsContent>
                 )
@@ -301,9 +316,10 @@ interface PhotosTableProps {
   onSelectionChange: (ids: string[]) => void;
   onDelete: (photo: Photo) => void;
   onEdit: (photoId: string, newTitle: string, newCategory: string) => void;
+  isProcessing: boolean;
 }
 
-function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onDelete, onEdit }: PhotosTableProps) {
+function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onDelete, onEdit, isProcessing }: PhotosTableProps) {
   const findPhotoCategoryInfo = (photoId: string) => {
     const gallery = galleries.find(g => g.photoIds?.includes(photoId));
     return { category: gallery?.category || 'Uncategorized', galleryId: gallery?.id || '' };
@@ -326,7 +342,6 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
   }
 
   const allSelected = photos.length > 0 && selectedPhotos.length === photos.length;
-  const isIndeterminate = selectedPhotos.length > 0 && selectedPhotos.length < photos.length;
   
   if (photos.length === 0) {
     return (
@@ -378,7 +393,7 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
                 <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-8 w-8 p-0" disabled={isProcessing}>
                           <span className="sr-only">Open menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -389,6 +404,7 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
                             currentGalleryId={galleryId} 
                             galleries={galleries} 
                             onSave={onEdit}
+                            isProcessing={isProcessing}
                             trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>}
                         />
                         <AlertDialog>
@@ -404,7 +420,8 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => onDelete(photo)}>
+                                <AlertDialogAction onClick={() => onDelete(photo)} disabled={isProcessing}>
+                                  {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -421,7 +438,7 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
   );
 }
 
-function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, trigger }: { photo: Photo, currentGalleryId: string, galleries: Gallery[], onSave: (photoId: string, newTitle: string, newCategory: string) => void, trigger: React.ReactNode }) {
+function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, isProcessing, trigger }: { photo: Photo, currentGalleryId: string, galleries: Gallery[], onSave: (photoId: string, newTitle: string, newCategory: string) => void, isProcessing: boolean, trigger: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(photo.title);
     const [category, setCategory] = useState(currentGalleryId);
@@ -461,9 +478,12 @@ function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, trigger }
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                        <Button variant="outline" disabled={isProcessing}>Cancel</Button>
                     </DialogClose>
-                    <Button type="button" onClick={handleSave}>Save Changes</Button>
+                    <Button type="button" onClick={handleSave} disabled={isProcessing}>
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -779,4 +799,5 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     </Dialog>
   );
 }
+
 
