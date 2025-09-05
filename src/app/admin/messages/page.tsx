@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Inbox } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -97,64 +97,64 @@ export default function AdminMessagesPage() {
           <CardDescription>View and manage inquiries from your site visitors.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[180px]">From</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead className="w-[120px]">Date</TableHead>
-                <TableHead className="w-[100px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {messages.length === 0 ? (
+          {messages.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
+                <Inbox className="mx-auto h-12 w-12" />
+                <h3 className="mt-4 text-lg font-medium text-foreground">No messages yet</h3>
+                <p className="mt-1 text-sm">When visitors send messages through your contact form, they will appear here.</p>
+            </div>
+           ) : (
+             <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    No messages found.
-                  </TableCell>
+                  <TableHead className="w-[180px]">From</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead className="w-[120px]">Date</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                messages.map((message) => (
-                  <TableRow key={message.id}>
-                    <TableCell>
-                      <div className="font-medium">{message.name}</div>
-                      <div className="text-sm text-muted-foreground">{message.email}</div>
-                    </TableCell>
-                    <TableCell className="max-w-sm truncate">{message.message}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {message.createdAt?.toDate().toLocaleDateString() ?? 'N/A'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete this message.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(message.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                  {messages.map((message) => (
+                    <TableRow key={message.id}>
+                      <TableCell>
+                        <div className="font-medium">{message.name}</div>
+                        <div className="text-sm text-muted-foreground">{message.email}</div>
+                      </TableCell>
+                      <TableCell className="max-w-sm truncate">{message.message}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {message.createdAt?.toDate().toLocaleDateString() ?? 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                         <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this message.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(message.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+           )}
         </CardContent>
       </Card>
     </AdminLayout>

@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Camera } from 'lucide-react';
 import { searchPhotos } from '@/ai/flows/ai-search-flow';
 import { useToast } from '@/hooks/use-toast';
 
@@ -131,41 +131,47 @@ function PortfolioGrid() {
         </Tabs>
       </div>
 
-      <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-        {displayedPhotos.map((photo, index) => (
-          <Dialog key={photo.id}>
-            <DialogTrigger asChild>
-              <div className="overflow-hidden rounded-lg cursor-pointer group break-inside-avoid">
+      {displayedPhotos.length === 0 ? (
+        <div className="text-center py-16">
+            <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="text-2xl font-headline mt-4">No Photos Found</h3>
+            {searchResults === null ? (
+                <p className="text-muted-foreground mt-2">This gallery is empty. Check back later!</p>
+            ) : (
+                <p className="text-muted-foreground mt-2">Try a different search query or browse another category.</p>
+            )}
+        </div>
+      ) : (
+        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+            {displayedPhotos.map((photo, index) => (
+            <Dialog key={photo.id}>
+                <DialogTrigger asChild>
+                <div className="overflow-hidden rounded-lg cursor-pointer group break-inside-avoid">
+                    <Image
+                    src={photo.url}
+                    alt={photo.title}
+                    width={photo.width}
+                    height={photo.height}
+                    className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                    data-ai-hint="photography"
+                    />
+                </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl p-0 border-0">
+                <DialogTitle className="sr-only">{photo.title}</DialogTitle>
                 <Image
-                  src={photo.url}
-                  alt={photo.title}
-                  width={photo.width}
-                  height={photo.height}
-                  className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                  data-ai-hint="photography"
-                />
-              </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl p-0 border-0">
-               <DialogTitle className="sr-only">{photo.title}</DialogTitle>
-               <Image
-                  src={photo.url}
-                  alt={photo.title}
-                  width={1200}
-                  height={800}
-                  className="w-full h-auto object-contain rounded-lg"
-                  data-ai-hint="photography"
-                />
-            </DialogContent>
-          </Dialog>
-        ))}
-      </div>
-      {searchResults && searchResults.length === 0 && (
-          <div className="text-center py-16">
-              <h3 className="text-2xl font-headline">No Photos Found</h3>
-              <p className="text-muted-foreground mt-2">Try a different search query or browse the categories.</p>
-          </div>
+                    src={photo.url}
+                    alt={photo.title}
+                    width={1200}
+                    height={800}
+                    className="w-full h-auto object-contain rounded-lg"
+                    data-ai-hint="photography"
+                    />
+                </DialogContent>
+            </Dialog>
+            ))}
+        </div>
       )}
     </>
   );

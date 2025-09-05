@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle } from 'lucide-react';
+import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon } from 'lucide-react';
 import { moderateImage } from '@/ai/flows/content-moderation-flow';
 import { generateCaption } from '@/ai/flows/generate-caption-flow';
 import { useToast } from '@/hooks/use-toast';
@@ -175,6 +175,16 @@ function PhotosTable({ photos, galleries, onDelete }: { photos: Photo[], galleri
   const findPhotoCategory = (photoId: string) => {
     const gallery = galleries.find(g => g.photoIds?.includes(photoId));
     return gallery?.category || 'Uncategorized';
+  }
+  
+  if (photos.length === 0) {
+    return (
+        <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
+            <ImageIcon className="mx-auto h-12 w-12" />
+            <h3 className="mt-4 text-lg font-medium text-foreground">No photos in this gallery</h3>
+            <p className="mt-1 text-sm">Upload photos to see them here.</p>
+        </div>
+    )
   }
 
   return (
