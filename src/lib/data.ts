@@ -112,16 +112,3 @@ export const services = [
     ],
   },
 ];
-
-export type Message = {
-  id: number;
-  name: string;
-  email: string;
-  message: string;
-  date: string;
-}
-
-export const contactMessages: Message[] = [
-    { id: 1, name: 'Jane Smith', email: 'jane@example.com', message: 'Inquiring about wedding packages for next June.', date: '2024-07-20' },
-    { id: 2, name: 'Mark Johnson', email: 'mark@example.com', message: 'I would love to book a portrait session.', date: '2024-07-19' },
-];

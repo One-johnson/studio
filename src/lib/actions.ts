@@ -2,6 +2,9 @@
 
 import { contactFormSchema } from '@/lib/schemas';
 import type { ContactFormState } from '@/lib/schemas';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 
 export async function submitContactForm(
   prevState: ContactFormState,
@@ -21,13 +24,23 @@ export async function submitContactForm(
     };
   }
 
-  // In a real application, you would save this to a database
-  // or send an email. For this demo, we'll just simulate success.
-  console.log('New contact form submission:');
-  console.log(validatedFields.data);
+  try {
+    // Save the new contact message to Firestore
+    await addDoc(collection(db, 'contact-messages'), {
+      ...validatedFields.data,
+      createdAt: serverTimestamp(),
+      archived: false,
+    });
 
-  return {
-    message: 'Thank you for your message! We will get back to you shortly.',
-    success: true,
-  };
+    return {
+      message: 'Thank you for your message! We will get back to you shortly.',
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error saving message to Firestore:", error);
+    return {
+      message: 'There was an error saving your message. Please try again.',
+      success: false,
+    }
+  }
 }
