@@ -62,7 +62,7 @@ export default function AdminSettingsPage() {
                         
                         <div className="space-y-4 rounded-md border p-4">
                             <h3 className="font-semibold">Step 3: Configure CORS</h3>
-                             <p className="text-sm text-muted-foreground">Scroll down to the "Cross-origin resource sharing (CORS)" section and click <code className="bg-muted px-1 py-0.5 rounded-sm">ADD A PRINCIPAL</code>. In the text area that appears, paste the following configuration:</p>
+                             <p className="text-sm text-muted-foreground">Scroll down to the "Cross-origin resource sharing (CORS)" section and click <code className="bg-muted px-1 py-0.5 rounded-sm">EDIT</code>. In the text area that appears, paste the following configuration:</p>
                             <Card className="bg-muted">
                                 <CardContent className="p-4">
                                     <pre className="text-xs font-mono whitespace-pre-wrap">
