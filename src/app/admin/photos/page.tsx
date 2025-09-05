@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,13 +13,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2 } from 'lucide-react';
+import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle } from 'lucide-react';
 import { moderateImage } from '@/ai/flows/content-moderation-flow';
 import { generateCaption } from '@/ai/flows/generate-caption-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import type { Photo, Gallery } from '@/lib/types';
 import {
@@ -37,7 +38,6 @@ export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   
   const { toast } = useToast();
 
@@ -64,7 +64,7 @@ export default function AdminPhotosPage() {
     fetchData();
   }, []);
 
-  const handleDelete = async (photo: Photo) => {
+  const handleDeletePhoto = async (photo: Photo) => {
     try {
       // Delete from Firestore
       await deleteDoc(doc(db, "photos", photo.id));
@@ -83,6 +83,36 @@ export default function AdminPhotosPage() {
     }
   };
 
+  const handleDeleteGallery = async (galleryId: string) => {
+    try {
+        // Note: This doesn't delete the photos within the gallery from storage.
+        // A more robust solution would handle associated photos.
+        await deleteDoc(doc(db, "galleries", galleryId));
+        toast({ title: "Success", description: "Gallery deleted." });
+        fetchData();
+    } catch (error) {
+        console.error("Error deleting gallery:", error);
+        toast({ title: "Error", description: "Failed to delete gallery.", variant: "destructive" });
+    }
+  };
+
+  const handleCreateGallery = async (title: string, category: string) => {
+    try {
+      const newGalleryRef = doc(db, "galleries", category);
+      await setDoc(newGalleryRef, {
+        title: title,
+        category: category,
+        photoIds: []
+      });
+      toast({ title: "Success", description: "Gallery created." });
+      fetchData();
+    } catch (error) {
+      console.error("Error creating gallery:", error);
+      toast({ title: "Error", description: "Failed to create gallery. Make sure the category slug is unique.", variant: "destructive" });
+    }
+  };
+
+
   if (loading) {
     return (
       <AdminLayout>
@@ -99,7 +129,7 @@ export default function AdminPhotosPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Photo Management</CardTitle>
-            <CardDescription>Upload, categorize, and manage your photos.</CardDescription>
+            <CardDescription>Upload, categorize, and manage your photos and galleries.</CardDescription>
           </div>
           <UploadDialog galleries={galleries} onUploadSuccess={fetchData} />
         </CardHeader>
@@ -110,18 +140,30 @@ export default function AdminPhotosPage() {
               {galleries.map(g => (
                 <TabsTrigger key={g.id} value={g.id}>{g.category}</TabsTrigger>
               ))}
+              <TabsTrigger value="manage-galleries">Galleries</TabsTrigger>
             </TabsList>
+
             <TabsContent value="all" className="mt-4">
-              <PhotosTable photos={photos} galleries={galleries} onDelete={handleDelete} />
+              <PhotosTable photos={photos} galleries={galleries} onDelete={handleDeletePhoto} />
             </TabsContent>
+
             {galleries.map(g => {
                 const galleryPhotos = photos.filter(p => g.photoIds?.includes(p.id))
                 return (
                     <TabsContent key={g.id} value={g.id} className="mt-4">
-                        <PhotosTable photos={galleryPhotos} galleries={galleries} onDelete={handleDelete} />
+                        <PhotosTable photos={galleryPhotos} galleries={galleries} onDelete={handleDeletePhoto} />
                     </TabsContent>
                 )
             })}
+            
+            <TabsContent value="manage-galleries" className="mt-4">
+              <ManageGalleries
+                galleries={galleries}
+                onCreate={handleCreateGallery}
+                onDelete={handleDeleteGallery}
+              />
+            </TabsContent>
+
           </Tabs>
         </CardContent>
       </Card>
@@ -188,6 +230,90 @@ function PhotosTable({ photos, galleries, onDelete }: { photos: Photo[], galleri
       </TableBody>
     </Table>
   );
+}
+
+function ManageGalleries({ galleries, onCreate, onDelete }: { galleries: Gallery[], onCreate: (title: string, category: string) => void, onDelete: (id: string) => void }) {
+    const [title, setTitle] = useState('');
+    const [category, setCategory] = useState('');
+
+    const handleCreate = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title || !category) return;
+        onCreate(title, category.toLowerCase().replace(/\s+/g, '-'));
+        setTitle('');
+        setCategory('');
+    };
+
+    return (
+        <div className="grid gap-8 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Create New Gallery</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleCreate} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="gallery-title">Gallery Title</Label>
+                            <Input id="gallery-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Wedding Moments" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="gallery-category">Category Slug</Label>
+                            <Input id="gallery-category" value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. weddings (unique)" />
+                        </div>
+                        <Button type="submit">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create Gallery
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Existing Galleries</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Slug</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {galleries.map(gallery => (
+                                <TableRow key={gallery.id}>
+                                    <TableCell>{gallery.title}</TableCell>
+                                    <TableCell><Badge variant="secondary">{gallery.id}</Badge></TableCell>
+                                    <TableCell className="text-right">
+                                       <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Gallery?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will delete the gallery but not the photos inside it. Are you sure?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => onDelete(gallery.id)}>Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }
 
 function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], onUploadSuccess: () => void }) {
