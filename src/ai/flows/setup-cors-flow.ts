@@ -45,6 +45,10 @@ const setupCorsFlow = ai.defineFlow(
       const client = await auth.getClient();
       const accessToken = await client.getAccessToken();
 
+      if (!accessToken.token) {
+        throw new Error('Failed to retrieve access token.');
+      }
+
       const corsConfiguration = [
         {
           "origin": [origin],
