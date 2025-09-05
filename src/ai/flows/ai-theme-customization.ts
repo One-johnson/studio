@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview AI-powered theme customization flow for the SnapVerse website.
+ * @fileOverview AI-powered theme customization flow for the clustergh website.
  *
  * - `customizeTheme`: Adjusts the color palette and fonts based on current design trends using AI.
  * - `ThemeCustomizationInput`: Input type for the `customizeTheme` function, defining the desired aesthetic.
@@ -42,7 +42,7 @@ const prompt = ai.definePrompt({
   name: 'themeCustomizationPrompt',
   input: { schema: ThemeCustomizationInputSchema },
   output: { schema: ThemeCustomizationOutputSchema },
-  prompt: `You are an AI-powered theme customization tool for the SnapVerse photography website. 
+  prompt: `You are an AI-powered theme customization tool for the clustergh photography website. 
 
 Based on current design trends and the following specifications, suggest adjustments to the color palette and fonts to create a modern and visually appealing website theme:
 

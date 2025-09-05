@@ -47,7 +47,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="flex justify-center items-center gap-2 mb-4">
             <Camera className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-headline">SnapVerse</h1>
+            <h1 className="text-3xl font-headline">clustergh</h1>
           </div>
           <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
           <CardDescription>Enter your credentials to access the dashboard.</CardDescription>

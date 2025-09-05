@@ -4,29 +4,59 @@ import Link from 'next/link';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { getFeaturedGalleries, getHomepageContent } from '@/lib/data';
+import { getFeaturedGalleries, getHomepageContent, getRecentPhotos } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 export default async function HomePage() {
   const featuredGalleries = await getFeaturedGalleries();
   const homepageContent = await getHomepageContent();
+  const recentPhotos = await getRecentPhotos(5);
 
   return (
     <PublicLayout>
       <div className="w-full">
         <section className="relative h-[60vh] md:h-[80vh] w-full flex items-center justify-center text-center text-white">
-          <Image
-            src="https://picsum.photos/1920/1080"
-            alt="Hero background"
-            fill
-            className="object-cover"
-            priority
-            data-ai-hint="dramatic landscape"
-          />
+           <Carousel className="w-full h-full" opts={{ loop: true }}>
+            <CarouselContent className="h-full">
+              {recentPhotos.map((photo) => (
+                <CarouselItem key={photo.id}>
+                  <Image
+                    src={photo.url}
+                    alt={photo.title || "Hero background"}
+                    fill
+                    className="object-cover"
+                    priority
+                    data-ai-hint="dramatic landscape"
+                  />
+                </CarouselItem>
+              ))}
+               {recentPhotos.length === 0 && (
+                <CarouselItem>
+                  <Image
+                    src="https://picsum.photos/1920/1080"
+                    alt="Hero background placeholder"
+                    fill
+                    className="object-cover"
+                    priority
+                    data-ai-hint="dramatic landscape"
+                  />
+                </CarouselItem>
+              )}
+            </CarouselContent>
+            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
+          </Carousel>
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative z-10 p-4 fade-in">
             <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight">
-              SnapVerse
+              clustergh
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body">
               {homepageContent.heroTagline}

@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'SnapVerse - Modern Photography Portfolio',
+  title: 'clustergh - Modern Photography Portfolio',
   description: 'A modern photography website to showcase beautiful portfolios.',
 };
 

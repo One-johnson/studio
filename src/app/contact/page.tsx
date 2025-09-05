@@ -121,7 +121,7 @@ export default function ContactPage() {
             <div className="space-y-4 text-lg">
               <div className="flex items-center gap-4">
                 <Mail className="h-6 w-6 text-primary" />
-                <a href="mailto:hello@snapverse.com" className="hover:text-primary transition-colors">hello@snapverse.com</a>
+                <a href="mailto:hello@clustergh.com" className="hover:text-primary transition-colors">hello@clustergh.com</a>
               </div>
               <div className="flex items-center gap-4">
                 <Phone className="h-6 w-6 text-primary" />

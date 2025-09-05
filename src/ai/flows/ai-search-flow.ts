@@ -42,7 +42,7 @@ const prompt = ai.definePrompt({
   name: 'aiSearchPrompt',
   input: { schema: AiSearchInputSchema },
   output: { schema: AiSearchOutputSchema },
-  prompt: `You are an intelligent search assistant for the SnapVerse photography portfolio. Your task is to find photos that match the user's search query from the provided list of photos.
+  prompt: `You are an intelligent search assistant for the clustergh photography portfolio. Your task is to find photos that match the user's search query from the provided list of photos.
 
 Analyze the user's query: {{{query}}}
 
