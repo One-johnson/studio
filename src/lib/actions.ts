@@ -43,7 +43,7 @@ export async function submitContactForm(
   } catch (error) {
     console.error("Error saving message to Firestore:", error);
     return {
-      message: 'There was an error saving your message. Please try again.',
+      message: 'There was an an error saving your message. Please try again.',
       success: false,
     }
   }
@@ -74,15 +74,13 @@ export async function applyTheme(theme: z.infer<typeof themeSchema>) {
         const backgroundHsl = convert.hex.hsl(backgroundColor);
         const accentHsl = convert.hex.hsl(accentColor);
         
-        // This is a simplistic way to replace; a more robust solution might use regex or AST parsing.
         let updatedCss = originalCss
-            .replace(/--primary: \d+ \d+% \d+%;/g, `--primary: ${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%;`)
-            .replace(/--background: \d+ \d+% \d+%;/g, `--background: ${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%;`)
-            .replace(/--accent: \d+ \d+% \d+%;/g, `--accent: ${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%;`)
-            .replace(/--ring: \d+ \d+% \d+%;/g, `--ring: ${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%;`);
-        
-        await fs.writeFile(cssPath, updatedCss, 'utf-8');
+            .replace(/--primary:\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%;/g, `--primary: ${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%;`)
+            .replace(/--background:\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%;/g, `--background: ${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%;`)
+            .replace(/--accent:\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%;/g, `--accent: ${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%;`)
+            .replace(/--ring:\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%;/g, `--ring: ${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%;`);
 
+        await fs.writeFile(cssPath, updatedCss, 'utf-8');
 
         // --- 2. Update Firestore theme document ---
         const themeDocRef = doc(db, 'theme', 'config');
@@ -90,7 +88,6 @@ export async function applyTheme(theme: z.infer<typeof themeSchema>) {
             headlineFont,
             bodyFont,
         }, { merge: true });
-
 
         return { success: true, message: 'Theme applied successfully.' };
 

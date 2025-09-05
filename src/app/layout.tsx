@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { getTheme } from '@/lib/theme';
 
 export const metadata: Metadata = {
-  title: 'clustergh - Modern Photography Portfolio',
+  title: 'SnapVerse - Modern Photography Portfolio',
   description: 'A modern photography website to showcase beautiful portfolios.',
 };
 

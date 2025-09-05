@@ -7,16 +7,24 @@ export type Theme = {
 };
 
 export async function getTheme(): Promise<Theme> {
-  const docRef = doc(db, 'theme', 'config');
-  const docSnap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, 'theme', 'config');
+    const docSnap = await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    return docSnap.data() as Theme;
-  } else {
-    // Return default theme if not found in Firestore
-    return {
-      headlineFont: 'Belleza',
-      bodyFont: 'Alegreya',
-    };
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        headlineFont: data.headlineFont || 'Belleza',
+        bodyFont: data.bodyFont || 'Alegreya',
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching theme from Firestore, returning default:", error);
   }
+  
+  // Return default theme if not found in Firestore or on error
+  return {
+    headlineFont: 'Belleza',
+    bodyFont: 'Alegreya',
+  };
 }
