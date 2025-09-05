@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -44,7 +45,21 @@ export default function AdminContentPage() {
       setLoading(true);
       try {
         const aboutDoc = await getDoc(doc(db, 'content', 'about'));
-        if (aboutDoc.exists()) setAbout(aboutDoc.data() as AboutContent);
+        if (aboutDoc.exists()) {
+          setAbout(aboutDoc.data() as AboutContent);
+        } else {
+          setAbout({
+              name: "Alex Doe",
+              bio: "Alex Doe is an award-winning photographer with a passion for capturing the beauty in everyday moments. With over a decade of experience, Alex specializes in wedding, portrait, and nature photography, bringing a unique artistic vision to every project. Alex believes that a great photograph is more than just an image; it's a story, a feeling, and a memory preserved in time. My goal is to create timeless art that my clients will cherish for a lifetime.",
+              mission: "To create authentic, beautiful, and timeless photographs that tell your unique story. I strive to provide a comfortable and enjoyable experience, resulting in images that are both stunning and deeply personal.",
+              awards: [
+                "International Photographer of the Year, 2023",
+                "Golden Lens Award, Weddings, 2022",
+                "Nature's Best Photography, 2020",
+              ],
+              imageUrl: "https://picsum.photos/800/1000",
+          });
+        }
 
         const homepageDoc = await getDoc(doc(db, 'content', 'homepage'));
         if (homepageDoc.exists()) {
