@@ -5,7 +5,10 @@ import { z } from 'zod';
 import { contactFormSchema } from '@/lib/schemas';
 import type { ContactFormState } from '@/lib/schemas';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { promises as fs } from 'fs';
+import path from 'path';
+import convert from 'color-convert';
 
 export async function submitContactForm(
   prevState: ContactFormState,
@@ -44,4 +47,55 @@ export async function submitContactForm(
       success: false,
     }
   }
+}
+
+const themeSchema = z.object({
+    primaryColor: z.string(),
+    backgroundColor: z.string(),
+    accentColor: z.string(),
+    headlineFont: z.string(),
+    bodyFont: z.string(),
+});
+
+export async function applyTheme(theme: z.infer<typeof themeSchema>) {
+    const validatedTheme = themeSchema.safeParse(theme);
+    if (!validatedTheme.success) {
+        throw new Error('Invalid theme data provided.');
+    }
+    
+    const { primaryColor, backgroundColor, accentColor, headlineFont, bodyFont } = validatedTheme.data;
+    
+    try {
+        // --- 1. Update globals.css ---
+        const cssPath = path.join(process.cwd(), 'src', 'app', 'globals.css');
+        const originalCss = await fs.readFile(cssPath, 'utf-8');
+
+        const primaryHsl = convert.hex.hsl(primaryColor);
+        const backgroundHsl = convert.hex.hsl(backgroundColor);
+        const accentHsl = convert.hex.hsl(accentColor);
+        
+        // This is a simplistic way to replace; a more robust solution might use regex or AST parsing.
+        let updatedCss = originalCss
+            .replace(/--primary: \d+ \d+% \d+%;/g, `--primary: ${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%;`)
+            .replace(/--background: \d+ \d+% \d+%;/g, `--background: ${backgroundHsl[0]} ${backgroundHsl[1]}% ${backgroundHsl[2]}%;`)
+            .replace(/--accent: \d+ \d+% \d+%;/g, `--accent: ${accentHsl[0]} ${accentHsl[1]}% ${accentHsl[2]}%;`)
+            .replace(/--ring: \d+ \d+% \d+%;/g, `--ring: ${primaryHsl[0]} ${primaryHsl[1]}% ${primaryHsl[2]}%;`);
+        
+        await fs.writeFile(cssPath, updatedCss, 'utf-8');
+
+
+        // --- 2. Update Firestore theme document ---
+        const themeDocRef = doc(db, 'theme', 'config');
+        await setDoc(themeDocRef, {
+            headlineFont,
+            bodyFont,
+        }, { merge: true });
+
+
+        return { success: true, message: 'Theme applied successfully.' };
+
+    } catch(error) {
+        console.error("Error applying theme:", error);
+        throw new Error('Failed to apply theme files.');
+    }
 }

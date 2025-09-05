@@ -5,17 +5,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { customizeTheme, type ThemeCustomizationOutput } from '@/ai/flows/ai-theme-customization';
+import { applyTheme } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wand2, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Wand2, Loader2, Paintbrush } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color"),
-  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color"),
+  backgroundColor: z.string().regex(/^#[0-9a-fAF]{6}$/, "Must be a valid hex color"),
   accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color"),
   headlineFont: z.string().min(1, "Cannot be empty"),
   bodyFont: z.string().min(1, "Cannot be empty"),
@@ -25,8 +28,11 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function ThemeCustomizationForm() {
-  const [loading, setLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [result, setResult] = useState<ThemeCustomizationOutput | null>(null);
+  const { toast } = useToast();
+  const router = useRouter();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -41,17 +47,39 @@ export default function ThemeCustomizationForm() {
   });
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true);
+    setIsGenerating(true);
     setResult(null);
     try {
       const response = await customizeTheme(data);
       setResult(response);
     } catch (error) {
       console.error("Theme customization failed:", error);
+      toast({ title: 'Error', description: 'Failed to generate theme suggestions.', variant: 'destructive' });
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
+
+  const handleApplyTheme = async () => {
+    if (!result) return;
+    setIsApplying(true);
+    try {
+      await applyTheme({
+        primaryColor: result.updatedPrimaryColor,
+        backgroundColor: result.updatedBackgroundColor,
+        accentColor: result.updatedAccentColor,
+        headlineFont: result.updatedHeadlineFont,
+        bodyFont: result.updatedBodyFont,
+      });
+      toast({ title: 'Theme Applied!', description: 'Your new theme is now live. The page will reload.' });
+      router.refresh();
+    } catch (error) {
+        console.error("Failed to apply theme:", error);
+        toast({ title: 'Error', description: 'Could not apply the new theme.', variant: 'destructive'});
+    } finally {
+        setIsApplying(false);
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -89,15 +117,15 @@ export default function ThemeCustomizationForm() {
           <Label htmlFor="styleDescription">Style Description (Optional)</Label>
           <Textarea id="styleDescription" {...register('styleDescription')} rows={4} placeholder="e.g., minimalist, brutalist, elegant..." />
         </div>
-        <Button type="submit" disabled={loading}>
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+        <Button type="submit" disabled={isGenerating}>
+          {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
           Generate Suggestions
         </Button>
       </form>
 
       <div className="lg:border-l lg:pl-8">
         <h3 className="text-lg font-semibold mb-4">AI Suggestions</h3>
-        {loading && (
+        {isGenerating && (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -140,9 +168,15 @@ export default function ThemeCustomizationForm() {
                 <p className="text-sm text-muted-foreground">{result.designNotes}</p>
               </div>
             </CardContent>
+            <CardFooter>
+                <Button onClick={handleApplyTheme} disabled={isApplying}>
+                    {isApplying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paintbrush className="mr-2 h-4 w-4" />}
+                    Apply Theme
+                </Button>
+            </CardFooter>
           </Card>
         )}
-        {!loading && !result && (
+        {!isGenerating && !result && (
           <div className="flex items-center justify-center h-full border rounded-lg bg-muted/20">
             <p className="text-muted-foreground">Suggestions will appear here.</p>
           </div>
