@@ -13,13 +13,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon, Pencil, MoreHorizontal } from 'lucide-react';
+import { Trash2, Upload, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon, Pencil, MoreHorizontal } from 'lucide-react';
 import { moderateImage } from '@/ai/flows/content-moderation-flow';
 import { generateCaption } from '@/ai/flows/generate-caption-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc, arrayRemove, writeBatch } from 'firebase/firestore';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Photo, Gallery } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -40,16 +40,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   
   const { toast } = useToast();
 
   const fetchData = async () => {
     setLoading(true);
+    setSelectedPhotos([]);
     try {
         const [photosSnapshot, galleriesSnapshot] = await Promise.all([
             getDocs(collection(db, 'photos')),
@@ -76,14 +79,16 @@ export default function AdminPhotosPage() {
       await deleteDoc(doc(db, "photos", photo.id));
       const imageRef = ref(storage, photo.url);
       await deleteObject(imageRef);
-      // Remove from any gallery that contains it
+      
+      const batch = writeBatch(db);
       for (const gallery of galleries) {
         if (gallery.photoIds?.includes(photo.id)) {
-          await updateDoc(doc(db, 'galleries', gallery.id), {
-            photoIds: arrayRemove(photo.id)
-          });
+          const galleryRef = doc(db, 'galleries', gallery.id);
+          batch.update(galleryRef, { photoIds: arrayRemove(photo.id) });
         }
       }
+      await batch.commit();
+
       toast({ title: "Success", description: "Photo deleted successfully." });
       fetchData(); // Refresh data
     } catch (error) {
@@ -91,11 +96,49 @@ export default function AdminPhotosPage() {
       toast({ title: "Error", description: "Failed to delete photo.", variant: "destructive" });
     }
   };
+  
+  const handleBulkDelete = async () => {
+    const batch = writeBatch(db);
+    
+    try {
+      for(const photoId of selectedPhotos) {
+          const photoToDelete = photos.find(p => p.id === photoId);
+          if (photoToDelete) {
+            // Delete from firestore
+            const photoRef = doc(db, "photos", photoToDelete.id);
+            batch.delete(photoRef);
+            
+            // Delete from storage
+            const imageRef = ref(storage, photoToDelete.url);
+            await deleteObject(imageRef);
+            
+            // Remove from any gallery that contains it
+            for (const gallery of galleries) {
+              if (gallery.photoIds?.includes(photoToDelete.id)) {
+                const galleryRef = doc(db, 'galleries', gallery.id);
+                batch.update(galleryRef, { photoIds: arrayRemove(photoToDelete.id) });
+              }
+            }
+          }
+      }
+      
+      await batch.commit();
+      
+      toast({ title: "Success", description: `${selectedPhotos.length} photos deleted.` });
+      fetchData();
+    } catch (error) {
+        console.error("Error deleting photos:", error);
+        toast({ title: "Error", description: "Failed to delete photos.", variant: "destructive" });
+    }
+  }
 
   const handleUpdatePhoto = async (photoId: string, newTitle: string, newCategory: string) => {
     try {
+        const batch = writeBatch(db);
+        
         // Update the photo title
-        await updateDoc(doc(db, 'photos', photoId), { title: newTitle });
+        const photoRef = doc(db, 'photos', photoId);
+        batch.update(photoRef, { title: newTitle });
 
         // Find the current and new galleries
         const currentGallery = galleries.find(g => g.photoIds?.includes(photoId));
@@ -104,17 +147,16 @@ export default function AdminPhotosPage() {
         // If the category has changed, update the galleries
         if (currentGallery?.id !== newGallery?.id) {
             if (currentGallery) {
-                await updateDoc(doc(db, 'galleries', currentGallery.id), {
-                    photoIds: arrayRemove(photoId)
-                });
+                const currentGalleryRef = doc(db, 'galleries', currentGallery.id);
+                batch.update(currentGalleryRef, { photoIds: arrayRemove(photoId) });
             }
             if (newGallery) {
-                await updateDoc(doc(db, 'galleries', newGallery.id), {
-                    photoIds: arrayUnion(photoId)
-                });
+                const newGalleryRef = doc(db, 'galleries', newGallery.id);
+                batch.update(newGalleryRef, { photoIds: arrayUnion(photoId) });
             }
         }
 
+        await batch.commit();
         toast({ title: "Success", description: "Photo updated." });
         fetchData();
     } catch(error) {
@@ -152,6 +194,9 @@ export default function AdminPhotosPage() {
     }
   };
 
+  const handleTabChange = () => {
+    setSelectedPhotos([]);
+  };
 
   if (loading) {
     return (
@@ -166,15 +211,39 @@ export default function AdminPhotosPage() {
   return (
     <AdminLayout>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-start justify-between">
           <div>
             <CardTitle>Photo Management</CardTitle>
             <CardDescription>Upload, categorize, and manage your photos and galleries.</CardDescription>
+             {selectedPhotos.length > 0 && (
+              <div className="mt-4 flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{selectedPhotos.length} selected</span>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete {selectedPhotos.length} photos. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
           <UploadDialog galleries={galleries} onUploadSuccess={fetchData} />
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all">
+          <Tabs defaultValue="all" onValueChange={handleTabChange}>
             <TabsList>
               <TabsTrigger value="all">All Photos</TabsTrigger>
               {galleries.map(g => (
@@ -184,14 +253,28 @@ export default function AdminPhotosPage() {
             </TabsList>
 
             <TabsContent value="all" className="mt-4">
-              <PhotosTable photos={photos} galleries={galleries} onDelete={handleDeletePhoto} onEdit={handleUpdatePhoto} />
+              <PhotosTable 
+                photos={photos} 
+                galleries={galleries} 
+                onDelete={handleDeletePhoto} 
+                onEdit={handleUpdatePhoto} 
+                selectedPhotos={selectedPhotos}
+                onSelectionChange={setSelectedPhotos}
+              />
             </TabsContent>
 
             {galleries.map(g => {
                 const galleryPhotos = photos.filter(p => g.photoIds?.includes(p.id))
                 return (
                     <TabsContent key={g.id} value={g.id} className="mt-4">
-                        <PhotosTable photos={galleryPhotos} galleries={galleries} onDelete={handleDeletePhoto} onEdit={handleUpdatePhoto}/>
+                        <PhotosTable 
+                          photos={galleryPhotos} 
+                          galleries={galleries} 
+                          onDelete={handleDeletePhoto} 
+                          onEdit={handleUpdatePhoto}
+                          selectedPhotos={selectedPhotos}
+                          onSelectionChange={setSelectedPhotos}
+                        />
                     </TabsContent>
                 )
             })}
@@ -211,11 +294,39 @@ export default function AdminPhotosPage() {
   );
 }
 
-function PhotosTable({ photos, galleries, onDelete, onEdit }: { photos: Photo[], galleries: Gallery[], onDelete: (photo: Photo) => void, onEdit: (photoId: string, newTitle: string, newCategory: string) => void }) {
+interface PhotosTableProps {
+  photos: Photo[];
+  galleries: Gallery[];
+  selectedPhotos: string[];
+  onSelectionChange: (ids: string[]) => void;
+  onDelete: (photo: Photo) => void;
+  onEdit: (photoId: string, newTitle: string, newCategory: string) => void;
+}
+
+function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onDelete, onEdit }: PhotosTableProps) {
   const findPhotoCategoryInfo = (photoId: string) => {
     const gallery = galleries.find(g => g.photoIds?.includes(photoId));
     return { category: gallery?.category || 'Uncategorized', galleryId: gallery?.id || '' };
   }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      onSelectionChange(photos.map(p => p.id));
+    } else {
+      onSelectionChange([]);
+    }
+  }
+
+  const handleRowSelect = (photoId: string, checked: boolean) => {
+    if (checked) {
+      onSelectionChange([...selectedPhotos, photoId]);
+    } else {
+      onSelectionChange(selectedPhotos.filter(id => id !== photoId));
+    }
+  }
+
+  const allSelected = photos.length > 0 && selectedPhotos.length === photos.length;
+  const isIndeterminate = selectedPhotos.length > 0 && selectedPhotos.length < photos.length;
   
   if (photos.length === 0) {
     return (
@@ -231,7 +342,13 @@ function PhotosTable({ photos, galleries, onDelete, onEdit }: { photos: Photo[],
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12"></TableHead>
+          <TableHead className="w-12">
+             <Checkbox 
+                onCheckedChange={handleSelectAll}
+                checked={allSelected}
+                aria-label="Select all"
+             />
+          </TableHead>
           <TableHead className="w-20">Image</TableHead>
           <TableHead>Title</TableHead>
           <TableHead>Category</TableHead>
@@ -241,9 +358,16 @@ function PhotosTable({ photos, galleries, onDelete, onEdit }: { photos: Photo[],
       <TableBody>
         {photos.map(photo => {
            const { category, galleryId } = findPhotoCategoryInfo(photo.id);
+           const isSelected = selectedPhotos.includes(photo.id);
            return (
-             <TableRow key={photo.id}>
-                <TableCell className="cursor-grab"><GripVertical className="h-5 w-5 text-muted-foreground" /></TableCell>
+             <TableRow key={photo.id} data-state={isSelected && "selected"}>
+                <TableCell>
+                    <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => handleRowSelect(photo.id, !!checked)}
+                        aria-label="Select photo"
+                    />
+                </TableCell>
                 <TableCell>
                   <Image src={photo.url} alt={photo.title} width={64} height={64} className="rounded-md object-cover" data-ai-hint="thumbnail" />
                 </TableCell>
@@ -336,6 +460,9 @@ function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, trigger }
                     </div>
                 </div>
                 <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
                     <Button type="button" onClick={handleSave}>Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
@@ -536,12 +663,14 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     setIsUploading(true);
 
     try {
+        const batch = writeBatch(db);
         await Promise.all(filesToSave.map(async (fileToSave) => {
             const storageRef = ref(storage, `photos/${Date.now()}-${fileToSave.file.name}`);
             const snapshot = await uploadBytes(storageRef, fileToSave.file, { contentType: fileToSave.file.type });
             const downloadURL = await getDownloadURL(snapshot.ref);
 
-            const photoDocRef = await addDoc(collection(db, 'photos'), {
+            const photoDocRef = doc(collection(db, 'photos'));
+            batch.set(photoDocRef, {
                 title: fileToSave.title,
                 url: downloadURL,
                 width: fileToSave.dimensions.width,
@@ -550,10 +679,12 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
             });
 
             const galleryRef = doc(db, 'galleries', fileToSave.category);
-            await updateDoc(galleryRef, {
+            batch.update(galleryRef, {
                 photoIds: arrayUnion(photoDocRef.id)
             });
         }));
+        
+        await batch.commit();
 
         toast({ title: 'Upload Successful!', description: `${filesToSave.length} photo(s) have been saved.` });
         onUploadSuccess();
@@ -648,3 +779,4 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     </Dialog>
   );
 }
+
