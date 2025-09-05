@@ -4,11 +4,12 @@ import Link from 'next/link';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { getFeaturedGalleries } from '@/lib/data';
+import { getFeaturedGalleries, getHomepageContent } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 
 export default async function HomePage() {
   const featuredGalleries = await getFeaturedGalleries();
+  const homepageContent = await getHomepageContent();
 
   return (
     <PublicLayout>
@@ -28,7 +29,7 @@ export default async function HomePage() {
               SnapVerse
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body">
-              Capturing life's moments, one frame at a time. Explore stunning visual stories through my lens.
+              {homepageContent.heroTagline}
             </p>
             <Button asChild size="lg" className="mt-8 font-headline">
               <Link href="/portfolio">
@@ -49,13 +50,20 @@ export default async function HomePage() {
                   <CardContent className="p-0">
                     <Link href={`/portfolio?category=${gallery.category.toLowerCase()}`}>
                       <div className="relative aspect-[4/3] overflow-hidden">
-                        <Image
-                          src={gallery.image}
-                          alt={gallery.title}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          data-ai-hint={gallery.title.toLowerCase()}
-                        />
+                        {gallery.photos && gallery.photos.length > 0 ? (
+                           <Image
+                            src={gallery.photos[0].url}
+                            alt={gallery.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            data-ai-hint={gallery.title.toLowerCase()}
+                          />
+                        ) : (
+                          <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                            <span className="text-muted-foreground">No image</span>
+                          </div>
+                        )}
+
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <div className="absolute bottom-0 left-0 p-6">
                           <h3 className="font-headline text-2xl text-white">{gallery.title}</h3>
@@ -67,6 +75,9 @@ export default async function HomePage() {
                 </Card>
               ))}
             </div>
+             {featuredGalleries.length === 0 && (
+                <p className="text-center text-muted-foreground">No featured galleries yet. Add some from the admin panel!</p>
+            )}
           </div>
         </section>
       </div>

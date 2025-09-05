@@ -24,6 +24,10 @@ export type AboutContent = {
   imageUrl: string;
 };
 
+export type HomepageContent = {
+  heroTagline: string;
+};
+
 export type Service = {
     id: string;
     title: string;

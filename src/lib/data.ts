@@ -1,9 +1,6 @@
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
-import type { Photo, Gallery, Service, AboutContent } from '@/lib/types';
-
-// In a real app, you would fetch this from a database.
-// For now, we use static data.
+import { collection, getDocs, doc, getDoc, query, limit } from 'firebase/firestore';
+import type { Photo, Gallery, Service, AboutContent, HomepageContent } from '@/lib/types';
 
 export async function getPhotos(): Promise<Photo[]> {
   const photosCollection = collection(db, 'photos');
@@ -18,22 +15,34 @@ export async function getGalleries(): Promise<Gallery[]> {
 
     return gallerySnapshot.docs.map(doc => {
         const galleryData = doc.data();
+        const photoIds = galleryData.photoIds || [];
         return {
             id: doc.id,
             title: galleryData.title,
             category: galleryData.category,
-            photos: photos.filter(p => galleryData.photoIds.includes(p.id))
+            photoIds: photoIds,
+            photos: photos.filter(p => photoIds.includes(p.id))
         } as Gallery
     });
 }
 
 
-export async function getFeaturedGalleries() {
-    return [
-      { id: 'weddings', title: 'Weddings', category: 'Weddings', image: 'https://picsum.photos/600/400?random=1', description: 'Timeless memories of your special day.' },
-      { id: 'portraits', title: 'Portraits', category: 'Portraits', image: 'https://picsum.photos/600/400?random=2', description: 'Capturing the essence of individuals.' },
-      { id: 'nature', title: 'Nature', category: 'Nature', image: 'https://picsum.photos/600/400?random=3', description: 'The beauty of the great outdoors.' },
-    ];
+export async function getFeaturedGalleries(): Promise<Gallery[]> {
+    const q = query(collection(db, 'galleries'), limit(3));
+    const querySnapshot = await getDocs(q);
+    const photos = await getPhotos();
+
+    return querySnapshot.docs.map(doc => {
+        const galleryData = doc.data();
+        const photoIds = galleryData.photoIds || [];
+        return {
+            id: doc.id,
+            title: galleryData.title,
+            category: galleryData.category,
+            photoIds: photoIds,
+            photos: photos.filter(p => photoIds.includes(p.id))
+        } as Gallery;
+    });
 }
 
 
@@ -44,7 +53,6 @@ export async function getAboutContent(): Promise<AboutContent> {
   if (docSnap.exists()) {
     return docSnap.data() as AboutContent;
   } else {
-    // Return a default object if the document doesn't exist
     return {
       name: "Alex Doe",
       bio: "Alex Doe is an award-winning photographer with a passion for capturing the beauty in everyday moments. With over a decade of experience, Alex specializes in wedding, portrait, and nature photography, bringing a unique artistic vision to every project. Alex believes that a great photograph is more than just an image; it's a story, a feeling, and a memory preserved in time. My goal is to create timeless art that my clients will cherish for a lifetime.",
@@ -59,8 +67,41 @@ export async function getAboutContent(): Promise<AboutContent> {
   }
 }
 
+export async function getHomepageContent(): Promise<HomepageContent> {
+  const docRef = doc(db, 'content', 'homepage');
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data() as HomepageContent;
+  } else {
+    return {
+      heroTagline: "Capturing life's moments, one frame at a time. Explore stunning visual stories through my lens.",
+    };
+  }
+}
+
 export async function getServices(): Promise<Service[]> {
-  const servicesCollection = collection(db, 'services');
-  const servicesSnapshot = await getDocs(servicesCollection);
-  return servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)).sort((a, b) => a.id.localeCompare(b.id)); // Assuming IDs are portrait-session, wedding-package, etc.
+  try {
+    const servicesCollection = collection(db, 'services');
+    const servicesSnapshot = await getDocs(servicesCollection);
+    
+    if (servicesSnapshot.empty) {
+      // If there are no services in the database, return default/mock data.
+      return [
+        { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice. Perfect for individuals, couples, or families.', features: [] },
+        { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day, from getting ready to the grand exit.', features: []},
+        { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events, parties, and other special occasions.', features: [] },
+      ];
+    }
+    
+    return servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)).sort((a, b) => a.id.localeCompare(b.id));
+  } catch (error) {
+    console.error("Error fetching services: ", error);
+    // Fallback to default data in case of an error
+    return [
+      { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice.', features: [] },
+      { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day.', features: []},
+      { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events.', features: [] },
+    ];
+  }
 }
