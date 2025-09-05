@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useActionState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,9 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { db, storage } from '@/lib/firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
+import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Photo, Gallery } from '@/lib/types';
-import { uploadPhoto } from '@/lib/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -320,6 +319,7 @@ function ManageGalleries({ galleries, onCreate, onDelete }: { galleries: Gallery
 function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], onUploadSuccess: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [moderationError, setModerationError] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -328,21 +328,6 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
   const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const { toast } = useToast();
-  
-  const [state, formAction] = useActionState(uploadPhoto, { message: '', success: false, photo: null });
-
-  useEffect(() => {
-    if (state.message) {
-      if (state.success) {
-        toast({ title: 'Upload Successful!', description: state.message });
-        onUploadSuccess();
-        setIsOpen(false);
-        resetDialogState();
-      } else {
-        toast({ title: "Upload Failed", description: state.message, variant: "destructive" });
-      }
-    }
-  }, [state, onUploadSuccess, toast]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -407,13 +392,52 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     setFile(null);
     setFileDataUri(null);
     setImageDimensions(null);
+    setIsUploading(false);
     if (!keepOpen) {
       setIsOpen(false);
     }
   }
 
-  const isFormDisabled = isProcessing || state.success;
-  const isActionDisabled = isProcessing || !file || !category || !title || !!moderationError || state.success;
+  const handleUpload = async () => {
+    if (!file || !category || !title || !imageDimensions) {
+        toast({ title: 'Missing Information', description: 'Please fill out all fields before uploading.', variant: 'destructive' });
+        return;
+    }
+    setIsUploading(true);
+
+    try {
+        // 1. Upload to Storage
+        const storageRef = ref(storage, `photos/${Date.now()}-${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file, { contentType: file.type });
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        // 2. Save to Firestore 'photos' collection
+        const photoDocRef = await addDoc(collection(db, 'photos'), {
+            title,
+            url: downloadURL,
+            width: imageDimensions.width,
+            height: imageDimensions.height,
+            createdAt: new Date(),
+        });
+
+        // 3. Update gallery 'photoIds'
+        const galleryRef = doc(db, 'galleries', category);
+        await updateDoc(galleryRef, {
+            photoIds: arrayUnion(photoDocRef.id)
+        });
+
+        toast({ title: 'Upload Successful!', description: 'Your photo has been saved.' });
+        onUploadSuccess(); // Refresh data on the main page
+        resetDialogState(); // Close and reset the dialog
+        
+    } catch(error) {
+        console.error("Upload failed:", error);
+        toast({ title: 'Upload Failed', description: 'An error occurred while uploading your photo.', variant: 'destructive'});
+        setIsUploading(false);
+    }
+  }
+
+  const isActionDisabled = isProcessing || isUploading || !file || !category || !title || !!moderationError;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -427,11 +451,11 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
         <DialogHeader>
           <DialogTitle>Upload New Photo</DialogTitle>
         </DialogHeader>
-        <form action={formAction}>
-          <div className="grid gap-4 py-4">
+        
+        <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photo-file" className="text-right">Photo</Label>
-              <Input id="photo-file" name="file" type="file" className="col-span-3" onChange={handleFileChange} accept="image/*" disabled={isFormDisabled} />
+              <Input id="photo-file" name="file" type="file" className="col-span-3" onChange={handleFileChange} accept="image/*" disabled={isProcessing || isUploading} />
             </div>
 
             {isProcessing && (
@@ -451,15 +475,13 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
 
             {file && !isProcessing && (
                 <>
-                    <input type="hidden" name="width" value={imageDimensions?.width || 0} />
-                    <input type="hidden" name="height" value={imageDimensions?.height || 0} />
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="title" className="text-right">Title</Label>
-                        <Input id="title" name="title" placeholder="e.g., Sunset Over The Lake" className="col-span-3" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isFormDisabled || !!moderationError} />
+                        <Input id="title" name="title" placeholder="e.g., Sunset Over The Lake" className="col-span-3" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isUploading || !!moderationError} />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="category" className="text-right">Category</Label>
-                        <Select name="category" onValueChange={setCategory} value={category} disabled={isFormDisabled || !!moderationError}>
+                        <Select name="category" onValueChange={setCategory} value={category} disabled={isUploading || !!moderationError}>
                           <SelectTrigger className="col-span-3">
                             <SelectValue placeholder="Select a category" />
                           </SelectTrigger>
@@ -472,14 +494,12 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
                     </div>
                 </>
             )}
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isActionDisabled}>
-              {(isProcessing || state.success) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Photo
+        </div>
+        <DialogFooter>
+            <Button type="button" onClick={handleUpload} disabled={isActionDisabled}>
+              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Photo' }
             </Button>
-          </DialogFooter>
-        </form>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
