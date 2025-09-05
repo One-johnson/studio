@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   projectId: "snapverse-803lq",
   appId: "1:298314408533:web:bd1bbf0406ff19e189eadc",
   storageBucket: "snapverse-803lq.appspot.com",
