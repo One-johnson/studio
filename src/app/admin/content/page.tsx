@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
-import type { AboutContent, Service, HomepageContent } from '@/lib/types';
+import type { AboutContent, Service, HomepageContent, TeamMember } from '@/lib/types';
 import { Loader2, Wand2, Plus, Trash2 } from 'lucide-react';
 import { generateServiceDescription } from '@/ai/flows/generate-service-description-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -22,8 +22,11 @@ type ServicesFormData = {
   services: Service[];
 };
 
+type AboutFormData = {
+  about: AboutContent;
+}
+
 export default function AdminContentPage() {
-  const [about, setAbout] = useState<AboutContent | null>(null);
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,10 +37,23 @@ export default function AdminContentPage() {
       services: [],
     },
   });
+  
+  const aboutForm = useForm<AboutFormData>({
+    defaultValues: {
+      about: {
+        name: '', bio: '', mission: '', awards: [], imageUrl: '', teamMembers: []
+      }
+    }
+  });
 
-  const { fields: serviceFields, append, remove, update } = useFieldArray({
+  const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
     control: servicesForm.control,
     name: "services",
+  });
+  
+  const { fields: teamMemberFields, append: appendTeamMember, remove: removeTeamMember } = useFieldArray({
+    control: aboutForm.control,
+    name: "about.teamMembers",
   });
 
   useEffect(() => {
@@ -46,9 +62,9 @@ export default function AdminContentPage() {
       try {
         const aboutDoc = await getDoc(doc(db, 'content', 'about'));
         if (aboutDoc.exists()) {
-          setAbout(aboutDoc.data() as AboutContent);
+          aboutForm.reset({ about: aboutDoc.data() as AboutContent });
         } else {
-          setAbout({
+          aboutForm.reset({ about: {
               name: "Alex Doe",
               bio: "Alex Doe is an award-winning photographer with a passion for capturing the beauty in everyday moments. With over a decade of experience, Alex specializes in wedding, portrait, and nature photography, bringing a unique artistic vision to every project. Alex believes that a great photograph is more than just an image; it's a story, a feeling, and a memory preserved in time. My goal is to create timeless art that my clients will cherish for a lifetime.",
               mission: "To create authentic, beautiful, and timeless photographs that tell your unique story. I strive to provide a comfortable and enjoyable experience, resulting in images that are both stunning and deeply personal.",
@@ -58,7 +74,8 @@ export default function AdminContentPage() {
                 "Nature's Best Photography, 2020",
               ],
               imageUrl: "https://picsum.photos/800/1000",
-          });
+              teamMembers: []
+          }});
         }
 
         const homepageDoc = await getDoc(doc(db, 'content', 'homepage'));
@@ -90,14 +107,12 @@ export default function AdminContentPage() {
       }
     }
     fetchData();
-  }, [toast, servicesForm]);
+  }, [toast, servicesForm, aboutForm]);
 
-  const handleAboutSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!about) return;
+  const handleAboutSubmit = async (data: AboutFormData) => {
     setSaving(true);
     try {
-      await setDoc(doc(db, 'content', 'about'), about, { merge: true });
+      await setDoc(doc(db, 'content', 'about'), data.about, { merge: true });
       toast({ title: "Success", description: "About page content saved." });
     } catch (error) {
       toast({ title: "Error", description: "Failed to save content.", variant: "destructive" });
@@ -131,12 +146,6 @@ export default function AdminContentPage() {
         toast({ title: "Error", description: "Failed to save service.", variant: "destructive" });
     } finally {
       setSaving(false);
-    }
-  }
-
-  const handleAboutChange = (field: keyof AboutContent, value: string) => {
-    if (about) {
-      setAbout({ ...about, [field]: value });
     }
   }
   
@@ -185,26 +194,48 @@ export default function AdminContentPage() {
               )}
             </TabsContent>
             <TabsContent value="about" className="mt-6">
-              {about && (
-                <form onSubmit={handleAboutSubmit} className="space-y-6">
-                  <div className="space-y-2">
+              <form onSubmit={aboutForm.handleSubmit(handleAboutSubmit)} className="space-y-6">
+                 <div className="space-y-2">
                     <Label htmlFor="about-name">Name</Label>
-                    <Input id="about-name" value={about.name} onChange={(e) => handleAboutChange('name', e.target.value)} />
+                    <Input id="about-name" {...aboutForm.register('about.name')} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="about-bio">Biography</Label>
-                    <Textarea id="about-bio" value={about.bio} onChange={(e) => handleAboutChange('bio', e.target.value)} rows={6} />
+                    <Textarea id="about-bio" {...aboutForm.register('about.bio')} rows={6} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="about-mission">Mission Statement</Label>
-                    <Textarea id="about-mission" value={about.mission} onChange={(e) => handleAboutChange('mission', e.target.value)} rows={4} />
+                    <Textarea id="about-mission" {...aboutForm.register('about.mission')} rows={4} />
                   </div>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Team Members</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {teamMemberFields.map((field, index) => (
+                        <Card key={field.id} className="p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <Input placeholder="Name" {...aboutForm.register(`about.teamMembers.${index}.name`)} />
+                             <Input placeholder="Role" {...aboutForm.register(`about.teamMembers.${index}.role`)} />
+                             <Input placeholder="Image URL" {...aboutForm.register(`about.teamMembers.${index}.imageUrl`)} className="md:col-span-2" />
+                          </div>
+                           <Button variant="ghost" size="sm" className="mt-2 text-red-500" onClick={() => removeTeamMember(index)}>
+                             <Trash2 className="mr-2 h-4 w-4" /> Remove
+                           </Button>
+                        </Card>
+                      ))}
+                       <Button type="button" variant="outline" size="sm" onClick={() => appendTeamMember({ name: '', role: '', imageUrl: '' })}>
+                        <Plus className="mr-2 h-4 w-4" /> Add Team Member
+                      </Button>
+                    </CardContent>
+                  </Card>
+
                   <Button type="submit" disabled={saving}>
                     {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save About Page Content
                   </Button>
-                </form>
-              )}
+              </form>
             </TabsContent>
             <TabsContent value="services" className="mt-6">
               <form onSubmit={servicesForm.handleSubmit(() => {})}>

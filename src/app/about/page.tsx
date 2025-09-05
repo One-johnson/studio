@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { getAboutContent } from '@/lib/data';
-import { CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default async function AboutPage() {
   const aboutContent = await getAboutContent();
@@ -57,6 +57,36 @@ export default async function AboutPage() {
             </Card>
           </div>
         </div>
+        
+        {aboutContent.teamMembers && aboutContent.teamMembers.length > 0 && (
+          <section className="mt-24">
+             <h2 className="text-3xl md:text-4xl font-headline text-center mb-12 flex items-center justify-center gap-4">
+                <Users className="h-8 w-8" />
+                Meet the Team
+             </h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {aboutContent.teamMembers.map((member, index) => (
+                  <Card key={index} className="text-center">
+                    <CardContent className="p-0">
+                       <Image
+                          src={member.imageUrl || 'https://picsum.photos/400/400'}
+                          alt={`Portrait of ${member.name}`}
+                          width={400}
+                          height={400}
+                          className="object-cover w-full h-auto aspect-square rounded-t-lg"
+                          data-ai-hint="team member portrait"
+                        />
+                    </CardContent>
+                     <CardHeader>
+                        <CardTitle className="font-headline text-xl">{member.name}</CardTitle>
+                        <CardDescription>{member.role}</CardDescription>
+                      </CardHeader>
+                  </Card>
+                ))}
+             </div>
+          </section>
+        )}
+
       </div>
     </PublicLayout>
   );

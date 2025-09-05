@@ -17,12 +17,19 @@ export type Gallery = {
   photos?: Photo[];
 };
 
+export type TeamMember = {
+  name: string;
+  role: string;
+  imageUrl: string;
+}
+
 export type AboutContent = {
   name: string;
   bio: string;
   mission: string;
   awards: string[];
   imageUrl: string;
+  teamMembers: TeamMember[];
 };
 
 export type HomepageContent = {

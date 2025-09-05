@@ -69,6 +69,11 @@ export async function getAboutContent(): Promise<AboutContent> {
         "Nature's Best Photography, 2020",
       ],
       imageUrl: "https://picsum.photos/800/1000",
+      teamMembers: [
+        { name: "Jane Smith", role: "Lead Assistant & Second Shooter", imageUrl: "https://picsum.photos/400/400" },
+        { name: "Mike Johnson", role: "Studio Manager & Editor", imageUrl: "https://picsum.photos/400/400" },
+        { name: "Emily White", role: "Client Relations & Booking", imageUrl: "https://picsum.photos/400/400" },
+      ]
     };
   }
 }
