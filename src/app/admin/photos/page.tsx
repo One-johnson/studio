@@ -325,6 +325,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
   const [category, setCategory] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [fileDataUri, setFileDataUri] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const { toast } = useToast();
   
@@ -358,6 +359,9 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
       setFileDataUri(uri);
 
       try {
+        const dimensions = await getImageDimensions(uri);
+        setImageDimensions(dimensions);
+
         const moderationPromise = moderateImage({ photoDataUri: uri });
         const captionPromise = generateCaption({ photoDataUri: uri });
 
@@ -402,32 +406,14 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     setCategory('');
     setFile(null);
     setFileDataUri(null);
+    setImageDimensions(null);
     if (!keepOpen) {
       setIsOpen(false);
     }
   }
-  
-  const handleFormSubmit = async (formData: FormData) => {
-    if (!file || !category || !!moderationError) {
-      toast({ title: "Save Failed", description: "Please ensure a file and category are selected, and the image is appropriate.", variant: "destructive" });
-      return;
-    }
-
-    if(fileDataUri) {
-      const dimensions = await getImageDimensions(fileDataUri);
-      formData.set('width', dimensions.width.toString());
-      formData.set('height', dimensions.height.toString());
-    }
-    
-    formData.set('file', file);
-    formData.set('title', title);
-    formData.set('category', category);
-
-    formAction(formData);
-  }
 
   const isFormDisabled = isProcessing || state.success;
-  const isActionDisabled = isProcessing || !file || !!moderationError || state.success;
+  const isActionDisabled = isProcessing || !file || !category || !title || !!moderationError || state.success;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -441,7 +427,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
         <DialogHeader>
           <DialogTitle>Upload New Photo</DialogTitle>
         </DialogHeader>
-        <form action={handleFormSubmit}>
+        <form action={formAction}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="photo-file" className="text-right">Photo</Label>
@@ -465,6 +451,8 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
 
             {file && !isProcessing && (
                 <>
+                    <input type="hidden" name="width" value={imageDimensions?.width || 0} />
+                    <input type="hidden" name="height" value={imageDimensions?.height || 0} />
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="title" className="text-right">Title</Label>
                         <Input id="title" name="title" placeholder="e.g., Sunset Over The Lake" className="col-span-3" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isFormDisabled || !!moderationError} />
