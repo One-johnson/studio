@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Autoplay from "embla-carousel-autoplay"
@@ -6,19 +9,42 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getFeaturedGalleries, getHomepageContent, getRecentPhotos } from '@/lib/data';
-import { ArrowRight, Image as ImageIcon } from 'lucide-react';
+import { ArrowRight, Image as ImageIcon, Loader2 } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
+} from "@/components/ui/carousel";
+import type { Gallery, HomepageContent, Photo } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function HomePage() {
-  const featuredGalleries = await getFeaturedGalleries();
-  const homepageContent = await getHomepageContent();
-  const recentPhotos = await getRecentPhotos(5);
+export default function HomePage() {
+  const [featuredGalleries, setFeaturedGalleries] = useState<Gallery[]>([]);
+  const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
+  const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [galleries, content, photos] = await Promise.all([
+          getFeaturedGalleries(),
+          getHomepageContent(),
+          getRecentPhotos(5)
+        ]);
+        setFeaturedGalleries(galleries);
+        setHomepageContent(content);
+        setRecentPhotos(photos);
+      } catch (error) {
+        console.error("Failed to fetch homepage data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   return (
     <PublicLayout>
@@ -34,7 +60,11 @@ export default async function HomePage() {
             ]}
            >
             <CarouselContent className="h-full" effect="fade">
-              {recentPhotos.map((photo) => (
+              {loading ? (
+                <CarouselItem>
+                  <Skeleton className="w-full h-full bg-muted" />
+                </CarouselItem>
+              ) : recentPhotos.map((photo) => (
                 <CarouselItem key={photo.id} className="transition-opacity duration-1000">
                   <Image
                     src={photo.url}
@@ -46,11 +76,11 @@ export default async function HomePage() {
                   />
                 </CarouselItem>
               ))}
-               {recentPhotos.length === 0 && (
+               {!loading && recentPhotos.length === 0 && (
                 <CarouselItem>
                   <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-foreground p-8">
                      <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight text-primary">
-                        clustergh
+                        SnapVerse
                     </h1>
                      <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body text-muted-foreground">
                         Your professional photography portfolio awaits.
@@ -60,22 +90,22 @@ export default async function HomePage() {
                 </CarouselItem>
               )}
             </CarouselContent>
-            {recentPhotos.length > 1 && (
+            {!loading && recentPhotos.length > 1 && (
                 <>
                     <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
                     <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
                 </>
             )}
           </Carousel>
-          { recentPhotos.length > 0 && 
+          { !loading && recentPhotos.length > 0 && 
             <>
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="relative z-10 p-4 fade-in">
                     <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight">
-                    clustergh
+                    SnapVerse
                     </h1>
                     <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body">
-                    {homepageContent.heroTagline}
+                    {homepageContent?.heroTagline}
                     </p>
                     <Button asChild size="lg" className="mt-8 font-headline">
                     <Link href="/portfolio">
@@ -93,7 +123,17 @@ export default async function HomePage() {
               Featured Galleries
             </h2>
             
-            {featuredGalleries.length === 0 ? (
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[...Array(3)].map((_, i) => (
+                        <Card key={i} className="overflow-hidden group">
+                          <CardContent className="p-0">
+                            <Skeleton className="w-full aspect-[4/3]" />
+                          </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            ) : featuredGalleries.length === 0 ? (
                  <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
                     <ImageIcon className="mx-auto h-12 w-12" />
                     <h3 className="mt-4 text-lg font-medium text-foreground">No featured galleries yet</h3>
@@ -138,3 +178,5 @@ export default async function HomePage() {
     </PublicLayout>
   );
 }
+
+    
