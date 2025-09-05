@@ -1,9 +1,11 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Autoplay from "embla-carousel-autoplay"
+import Fade from 'embla-carousel-fade'
 
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,9 @@ export default function HomePage() {
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
   const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
+  const fadePlugin = useRef(
+    Fade({ crossfade: true, inViewThreshold: 0.1 })
+  )
 
   useEffect(() => {
     async function fetchData() {
@@ -56,10 +61,12 @@ export default function HomePage() {
             plugins={[
                 Autoplay({
                   delay: 5000,
+                  stopOnInteraction: false,
                 }),
+                fadePlugin.current
             ]}
            >
-            <CarouselContent className="h-full" effect="fade">
+            <CarouselContent className="h-full">
               {loading ? (
                 <CarouselItem>
                   <Skeleton className="w-full h-full bg-muted" />
