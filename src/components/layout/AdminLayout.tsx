@@ -14,6 +14,7 @@ import {
   MessageSquare,
   LogOut,
   Loader2,
+  ExternalLink,
 } from 'lucide-react'
 import {
   SidebarProvider,
@@ -125,6 +126,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <SidebarFooter>
           <Separator className="my-2" />
           <SidebarMenu>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={{ children: 'View Public Site', side: 'right' }}>
+                <Link href="/" target="_blank">
+                  <ExternalLink />
+                  <span>View Public Site</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Logout', side: 'right' }}>
                 <LogOut />
