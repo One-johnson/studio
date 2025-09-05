@@ -80,7 +80,6 @@ export default function AdminDashboardPage() {
     });
 
     return Array.from(dailyMessages.entries()).map(([date, count]) => ({ date, messages: count }));
-
   }, [messages]);
 
   const recentPhotos = photos.slice(0, 5);
@@ -88,7 +87,7 @@ export default function AdminDashboardPage() {
   const findPhotoCategory = (photoId: string) => {
     const gallery = galleries.find(g => g.photoIds?.includes(photoId));
     return gallery?.category || 'Uncategorized';
-  }
+  };
 
   if (loading) {
     return (
@@ -97,7 +96,7 @@ export default function AdminDashboardPage() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </AdminLayout>
-    )
+    );
   }
 
   return (
@@ -123,7 +122,7 @@ export default function AdminDashboardPage() {
               <div className="text-2xl font-bold">{galleries.length}</div>
               <p className="text-xs text-muted-foreground">Categories of photos</p>
             </CardContent>
-          </card>
+          </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">New Messages</CardTitle>
