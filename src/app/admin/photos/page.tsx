@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon, Pencil } from 'lucide-react';
+import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon, Pencil, MoreHorizontal } from 'lucide-react';
 import { moderateImage } from '@/ai/flows/content-moderation-flow';
 import { generateCaption } from '@/ai/flows/generate-caption-flow';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,12 @@ import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, set
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Photo, Gallery } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -246,29 +252,42 @@ function PhotosTable({ photos, galleries, onDelete, onEdit }: { photos: Photo[],
                   <Badge variant="outline">{category}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                    <EditPhotoDialog photo={photo} currentGalleryId={galleryId} galleries={galleries} onSave={onEdit} />
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the photo from your storage and database.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(photo)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                         <EditPhotoDialog 
+                            photo={photo} 
+                            currentGalleryId={galleryId} 
+                            galleries={galleries} 
+                            onSave={onEdit}
+                            trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>}
+                        />
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                               <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the photo from your storage and database.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(photo)}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                 </TableCell>
               </TableRow>
            )
@@ -278,7 +297,7 @@ function PhotosTable({ photos, galleries, onDelete, onEdit }: { photos: Photo[],
   );
 }
 
-function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave }: { photo: Photo, currentGalleryId: string, galleries: Gallery[], onSave: (photoId: string, newTitle: string, newCategory: string) => void }) {
+function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, trigger }: { photo: Photo, currentGalleryId: string, galleries: Gallery[], onSave: (photoId: string, newTitle: string, newCategory: string) => void, trigger: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(photo.title);
     const [category, setCategory] = useState(currentGalleryId);
@@ -291,10 +310,7 @@ function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave }: { photo
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                </Button>
+                {trigger}
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -632,5 +648,3 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     </Dialog>
   );
 }
-
-    
