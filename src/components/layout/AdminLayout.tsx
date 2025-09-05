@@ -143,8 +143,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
+      <SidebarInset className="h-screen flex flex-col overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-6 z-10">
           <SidebarTrigger className="hidden md:flex"/>
           <div className="flex-1">
             <h1 className="text-lg font-semibold font-headline">
@@ -152,7 +152,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </h1>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-6 bg-background">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
           {children}
         </main>
       </SidebarInset>
