@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo, Suspense, useTransition } from 'react';
+import { useState, useMemo, Suspense, useTransition, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import PublicLayout from '@/components/layout/PublicLayout';
-import { galleries, photos as allPhotos, Photo } from '@/lib/data';
+import { getGalleries, getPhotos } from '@/lib/data';
+import type { Gallery, Photo } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,31 @@ function PortfolioGrid() {
   const [searchResults, setSearchResults] = useState<Photo[] | null>(null);
   const [isSearching, startSearchTransition] = useTransition();
   const { toast } = useToast();
+  
+  const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [galleriesData, photosData] = await Promise.all([getGalleries(), getPhotos()]);
+        setGalleries(galleriesData);
+        setAllPhotos(photosData);
+      } catch (error) {
+        console.error("Failed to fetch portfolio data", error);
+        toast({
+          title: "Error",
+          description: "Could not load portfolio data.",
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [toast]);
 
   const photosForCategory = useMemo(() => {
     if (activeCategory === 'all') {
@@ -29,7 +55,7 @@ function PortfolioGrid() {
     }
     const gallery = galleries.find(g => g.category.toLowerCase() === activeCategory);
     return gallery ? gallery.photos : [];
-  }, [activeCategory]);
+  }, [activeCategory, allPhotos, galleries]);
   
   const displayedPhotos = searchResults ?? photosForCategory;
 
@@ -42,7 +68,7 @@ function PortfolioGrid() {
 
     startSearchTransition(async () => {
       try {
-        const photosToSearch = allPhotos.map(({ id, title }) => ({ id, title }));
+        const photosToSearch = allPhotos.map(({ id, title }) => ({ id, title: title || '' }));
         const result = await searchPhotos({ query: searchQuery, photos: photosToSearch });
         
         const foundPhotos = allPhotos.filter(p => result.photoIds.includes(p.id));
@@ -64,6 +90,14 @@ function PortfolioGrid() {
       }
     });
   };
+
+  if (loading) {
+    return (
+       <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    )
+  }
 
   return (
     <>

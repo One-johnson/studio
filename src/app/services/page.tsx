@@ -1,11 +1,13 @@
 import PublicLayout from '@/components/layout/PublicLayout';
-import { services } from '@/lib/data';
+import { getServices } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const services = await getServices();
+
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-16 md:py-24">

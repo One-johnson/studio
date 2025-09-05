@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import PublicLayout from '@/components/layout/PublicLayout';
-import { aboutContent } from '@/lib/data';
+import { getAboutContent } from '@/lib/data';
 import { CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const aboutContent = await getAboutContent();
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-16 md:py-24">

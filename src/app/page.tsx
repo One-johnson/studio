@@ -4,10 +4,12 @@ import Link from 'next/link';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { featuredGalleries } from '@/lib/data';
+import { getFeaturedGalleries } from '@/lib/data';
 import { ArrowRight } from 'lucide-react';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featuredGalleries = await getFeaturedGalleries();
+
   return (
     <PublicLayout>
       <div className="w-full">

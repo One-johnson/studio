@@ -1,13 +1,61 @@
+'use client';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { galleries, photos } from '@/lib/data';
-import { ImageIcon, BookImage, MessageSquare } from 'lucide-react';
+import { ImageIcon, BookImage, MessageSquare, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import type { Photo, Gallery } from '@/lib/types';
 
 export default function AdminDashboardPage() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [messageCount, setMessageCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [photosSnapshot, galleriesSnapshot, messagesSnapshot] = await Promise.all([
+          getDocs(collection(db, 'photos')),
+          getDocs(collection(db, 'galleries')),
+          getDocs(collection(db, 'contact-messages'))
+        ]);
+        
+        const photosData = photosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Photo[];
+        const galleriesData = galleriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Gallery[];
+
+        setPhotos(photosData);
+        setGalleries(galleriesData);
+        setMessageCount(messagesSnapshot.size);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
   const recentPhotos = photos.slice(0, 5);
+  
+  const findPhotoCategory = (photoId: string) => {
+    const gallery = galleries.find(g => g.photoIds?.includes(photoId));
+    return gallery?.category || 'Uncategorized';
+  }
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
+    )
+  }
 
   return (
     <AdminLayout>
@@ -39,7 +87,7 @@ export default function AdminDashboardPage() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--</div>
+              <div className="text-2xl font-bold">{messageCount ?? '--'}</div>
               <p className="text-xs text-muted-foreground">View in Messages tab</p>
             </CardContent>
           </Card>
@@ -60,9 +108,7 @@ export default function AdminDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentPhotos.map((photo) => {
-                  const category = galleries.find(g => g.photos.some(p => p.id === photo.id))?.category || 'Uncategorized';
-                  return (
+                {recentPhotos.map((photo) => (
                     <TableRow key={photo.id}>
                       <TableCell>
                         <Image
@@ -76,12 +122,11 @@ export default function AdminDashboardPage() {
                       </TableCell>
                       <TableCell className="font-medium">{photo.title}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{category}</Badge>
+                        <Badge variant="outline">{findPhotoCategory(photo.id)}</Badge>
                       </TableCell>
                       <TableCell>{photo.width}x{photo.height}</TableCell>
                     </TableRow>
-                  );
-                })}
+                  ))}
               </TableBody>
             </Table>
           </CardContent>

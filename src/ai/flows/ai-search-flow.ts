@@ -17,7 +17,7 @@ const AiSearchInputSchema = z.object({
   photos: z
     .array(
       z.object({
-        id: z.number(),
+        id: z.string(),
         title: z.string(),
       })
     )
@@ -28,7 +28,7 @@ export type AiSearchInput = z.infer<typeof AiSearchInputSchema>;
 
 const AiSearchOutputSchema = z.object({
   photoIds: z
-    .array(z.number())
+    .array(z.string())
     .describe('An array of photo IDs that best match the search query, sorted by relevance.'),
 });
 
