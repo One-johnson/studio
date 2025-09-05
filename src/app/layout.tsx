@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { Alegreya, Belleza } from 'next/font/google';
+import { Belleza, Inter } from 'next/font/google';
 
 const belleza = Belleza({
   subsets: ['latin'],
@@ -9,11 +9,9 @@ const belleza = Belleza({
   variable: '--font-belleza',
 });
 
-const alegreya = Alegreya({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-alegreya',
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -27,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${belleza.variable} ${alegreya.variable} dark`} suppressHydrationWarning>
+    <html lang="en" className={`${belleza.variable} ${inter.variable} dark`} suppressHydrationWarning>
       <body>
         {children}
         <Toaster />

@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'generateCaptionPrompt',
   input: { schema: GenerateCaptionInputSchema },
   output: { schema: GenerateCaptionOutputSchema },
-  prompt: `You are a professional photographer and content creator for the clustergh website. Your task is to analyze the provided image and generate a creative, professional title and a brief, compelling description for it.
+  prompt: `You are a professional photographer and content creator for the SnapVerse website. Your task is to analyze the provided image and generate a creative, professional title and a brief, compelling description for it.
 
 The title should be evocative and catchy. The description should be 1-2 sentences and highlight the key elements or mood of the photograph.
 

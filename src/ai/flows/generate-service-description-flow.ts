@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'generateServiceDescriptionPrompt',
   input: { schema: GenerateServiceDescriptionInputSchema },
   output: { schema: GenerateServiceDescriptionOutputSchema },
-  prompt: `You are a professional copywriter for the clustergh photography website. Your task is to generate a compelling service description and a list of features for a photography package.
+  prompt: `You are a professional copywriter for the SnapVerse photography website. Your task is to generate a compelling service description and a list of features for a photography package.
 
 Service Title: {{{title}}}
 {{#if keywords}}

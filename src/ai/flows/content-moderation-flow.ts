@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'contentModerationPrompt',
   input: { schema: ImageModerationInputSchema },
   output: { schema: ImageModerationOutputSchema },
-  prompt: `You are a content moderator for a professional photography website called clustergh. Your task is to analyze the provided image and determine if it is appropriate for a general audience and a professional portfolio.
+  prompt: `You are a content moderator for a professional photography website called SnapVerse. Your task is to analyze the provided image and determine if it is appropriate for a general audience and a professional portfolio.
 
 The following content is considered inappropriate:
 - Nudity or sexually explicit content

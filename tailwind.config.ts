@@ -10,7 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-alegreya)', 'serif'],
+        body: ['var(--font-inter)', 'sans-serif'],
         headline: ['var(--font-belleza)', 'sans-serif'],
       },
       colors: {
