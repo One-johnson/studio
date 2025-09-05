@@ -1,79 +1,100 @@
 
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu, Camera } from 'lucide-react';
+import { User, Menu, X, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Button } from '@/components/ui/button';
 
-const navLinks = [
-  { href: '/', label: 'Home' },
+
+const navItems = [
   { href: '/portfolio', label: 'Portfolio' },
-  { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
+  { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
 
 export default function Header() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 flex items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <Camera className="h-6 w-6 text-primary" />
-            <span className="font-bold font-headline text-lg">
-              Clustergh
-            </span>
-          </Link>
-        </div>
-        <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-          {navLinks.map((link) => (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 font-headline text-xl font-semibold">
+          <Camera className="h-6 w-6 text-primary" />
+          <span>Clustergh</span>
+        </Link>
+        
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          {navItems.map((item) => (
             <Link
-              key={link.href}
-              href={link.href}
+              key={item.href}
+              href={item.href}
               className={cn(
-                'transition-colors hover:text-foreground/80',
-                pathname === link.href ? 'text-foreground' : 'text-foreground/60'
+                'transition-colors hover:text-primary',
+                pathname === item.href ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {link.label}
+              {item.label}
             </Link>
           ))}
+          <Link href="/login" aria-label="Admin Login">
+             <User className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
+          </Link>
         </nav>
-        <div className="flex flex-1 items-center justify-end gap-2 md:hidden">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left">
-              <div className="flex flex-col gap-4 py-6">
-                 <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsOpen(false)}>
-                    <Camera className="h-6 w-6 text-primary" />
-                    <span className="font-bold font-headline text-lg">Clustergh</span>
-                  </Link>
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                        'text-lg font-medium',
-                        pathname === link.href ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+            <SheetContent side="right" className="w-full max-w-xs bg-background">
+               <div className="flex flex-col h-full">
+                  <div className="flex items-center justify-between border-b pb-4">
+                     <Link href="/" className="flex items-center gap-2 font-headline text-xl font-semibold" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Camera className="h-6 w-6 text-primary" />
+                        <span>Clustergh</span>
+                    </Link>
+                    <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+                        <X className="h-6 w-6" />
+                        <span className="sr-only">Close menu</span>
+                    </Button>
+                  </div>
+                 <nav className="flex flex-col gap-6 mt-8 text-lg font-medium">
+                    {navItems.map((item) => (
+                        <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={cn(
+                            'transition-colors hover:text-primary',
+                            pathname === item.href ? 'text-primary' : 'text-foreground'
+                        )}
+                        >
+                        {item.label}
+                        </Link>
+                    ))}
+                 </nav>
+                 <div className="mt-auto border-t pt-4">
+                    <Link href="/login" className="flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
+                         <User className="h-5 w-5" />
+                        <span>Admin Login</span>
+                    </Link>
+                 </div>
+               </div>
             </SheetContent>
           </Sheet>
         </div>

@@ -78,7 +78,7 @@ export default function HomePage() {
                       src={photo.url}
                       alt={photo.title || "Hero background"}
                       fill
-                      className="object-cover -z-10"
+                      className="object-cover"
                       priority
                       data-ai-hint="dramatic landscape"
                     />
