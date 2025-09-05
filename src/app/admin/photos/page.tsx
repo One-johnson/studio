@@ -8,20 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Upload, GripVertical, Loader2, ShieldOff, Wand2, PlusCircle, Image as ImageIcon, Pencil } from 'lucide-react';
 import { moderateImage } from '@/ai/flows/content-moderation-flow';
 import { generateCaption } from '@/ai/flows/generate-caption-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { db, storage } from '@/lib/firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, setDoc, arrayRemove } from 'firebase/firestore';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Photo, Gallery } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,15 +67,17 @@ export default function AdminPhotosPage() {
 
   const handleDeletePhoto = async (photo: Photo) => {
     try {
-      // Delete from Firestore
       await deleteDoc(doc(db, "photos", photo.id));
-      
-      // Delete from Storage
       const imageRef = ref(storage, photo.url);
       await deleteObject(imageRef);
-
-      // In a real app, also remove from gallery's photoIds array
-      
+      // Remove from any gallery that contains it
+      for (const gallery of galleries) {
+        if (gallery.photoIds?.includes(photo.id)) {
+          await updateDoc(doc(db, 'galleries', gallery.id), {
+            photoIds: arrayRemove(photo.id)
+          });
+        }
+      }
       toast({ title: "Success", description: "Photo deleted successfully." });
       fetchData(); // Refresh data
     } catch (error) {
@@ -82,6 +85,37 @@ export default function AdminPhotosPage() {
       toast({ title: "Error", description: "Failed to delete photo.", variant: "destructive" });
     }
   };
+
+  const handleUpdatePhoto = async (photoId: string, newTitle: string, newCategory: string) => {
+    try {
+        // Update the photo title
+        await updateDoc(doc(db, 'photos', photoId), { title: newTitle });
+
+        // Find the current and new galleries
+        const currentGallery = galleries.find(g => g.photoIds?.includes(photoId));
+        const newGallery = galleries.find(g => g.id === newCategory);
+
+        // If the category has changed, update the galleries
+        if (currentGallery?.id !== newGallery?.id) {
+            if (currentGallery) {
+                await updateDoc(doc(db, 'galleries', currentGallery.id), {
+                    photoIds: arrayRemove(photoId)
+                });
+            }
+            if (newGallery) {
+                await updateDoc(doc(db, 'galleries', newGallery.id), {
+                    photoIds: arrayUnion(photoId)
+                });
+            }
+        }
+
+        toast({ title: "Success", description: "Photo updated." });
+        fetchData();
+    } catch(error) {
+        console.error("Error updating photo:", error);
+        toast({ title: "Error", description: "Failed to update photo.", variant: "destructive" });
+    }
+  }
 
   const handleDeleteGallery = async (galleryId: string) => {
     try {
@@ -144,14 +178,14 @@ export default function AdminPhotosPage() {
             </TabsList>
 
             <TabsContent value="all" className="mt-4">
-              <PhotosTable photos={photos} galleries={galleries} onDelete={handleDeletePhoto} />
+              <PhotosTable photos={photos} galleries={galleries} onDelete={handleDeletePhoto} onEdit={handleUpdatePhoto} />
             </TabsContent>
 
             {galleries.map(g => {
                 const galleryPhotos = photos.filter(p => g.photoIds?.includes(p.id))
                 return (
                     <TabsContent key={g.id} value={g.id} className="mt-4">
-                        <PhotosTable photos={galleryPhotos} galleries={galleries} onDelete={handleDeletePhoto} />
+                        <PhotosTable photos={galleryPhotos} galleries={galleries} onDelete={handleDeletePhoto} onEdit={handleUpdatePhoto}/>
                     </TabsContent>
                 )
             })}
@@ -171,10 +205,10 @@ export default function AdminPhotosPage() {
   );
 }
 
-function PhotosTable({ photos, galleries, onDelete }: { photos: Photo[], galleries: Gallery[], onDelete: (photo: Photo) => void }) {
-  const findPhotoCategory = (photoId: string) => {
+function PhotosTable({ photos, galleries, onDelete, onEdit }: { photos: Photo[], galleries: Gallery[], onDelete: (photo: Photo) => void, onEdit: (photoId: string, newTitle: string, newCategory: string) => void }) {
+  const findPhotoCategoryInfo = (photoId: string) => {
     const gallery = galleries.find(g => g.photoIds?.includes(photoId));
-    return gallery?.category || 'Uncategorized';
+    return { category: gallery?.category || 'Uncategorized', galleryId: gallery?.id || '' };
   }
   
   if (photos.length === 0) {
@@ -199,47 +233,98 @@ function PhotosTable({ photos, galleries, onDelete }: { photos: Photo[], galleri
         </TableRow>
       </TableHeader>
       <TableBody>
-        {photos.map(photo => (
-           <TableRow key={photo.id}>
-            <TableCell className="cursor-grab"><GripVertical className="h-5 w-5 text-muted-foreground" /></TableCell>
-            <TableCell>
-              <Image src={photo.url} alt={photo.title} width={64} height={64} className="rounded-md object-cover" data-ai-hint="thumbnail" />
-            </TableCell>
-            <TableCell className="font-medium">{photo.title}</TableCell>
-            <TableCell>
-              <Badge variant="outline">
-                {findPhotoCategory(photo.id)}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                       <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the photo from your storage and database.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(photo)}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </TableCell>
-          </TableRow>
-        ))}
+        {photos.map(photo => {
+           const { category, galleryId } = findPhotoCategoryInfo(photo.id);
+           return (
+             <TableRow key={photo.id}>
+                <TableCell className="cursor-grab"><GripVertical className="h-5 w-5 text-muted-foreground" /></TableCell>
+                <TableCell>
+                  <Image src={photo.url} alt={photo.title} width={64} height={64} className="rounded-md object-cover" data-ai-hint="thumbnail" />
+                </TableCell>
+                <TableCell className="font-medium">{photo.title}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{category}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                    <EditPhotoDialog photo={photo} currentGalleryId={galleryId} galleries={galleries} onSave={onEdit} />
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the photo from your storage and database.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(photo)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </TableCell>
+              </TableRow>
+           )
+        })}
       </TableBody>
     </Table>
   );
+}
+
+function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave }: { photo: Photo, currentGalleryId: string, galleries: Gallery[], onSave: (photoId: string, newTitle: string, newCategory: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [title, setTitle] = useState(photo.title);
+    const [category, setCategory] = useState(currentGalleryId);
+
+    const handleSave = () => {
+        onSave(photo.id, title, category);
+        setIsOpen(false);
+    }
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Photo Details</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-title">Title</Label>
+                        <Input id="edit-title" value={title} onChange={e => setTitle(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-category">Category</Label>
+                        <Select onValueChange={setCategory} defaultValue={category}>
+                          <SelectTrigger id="edit-category">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {galleries.map(g => (
+                              <SelectItem key={g.id} value={g.id}>{g.category}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" onClick={handleSave}>Save Changes</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 function ManageGalleries({ galleries, onCreate, onDelete }: { galleries: Gallery[], onCreate: (title: string, category: string) => void, onDelete: (id: string) => void }) {
@@ -326,82 +411,100 @@ function ManageGalleries({ galleries, onCreate, onDelete }: { galleries: Gallery
     );
 }
 
+type UploadableFile = {
+    id: number;
+    file: File;
+    dataUri: string;
+    title: string;
+    category: string;
+    dimensions: { width: number; height: number; };
+    moderation: { isAppropriate: boolean; reason: string; };
+    status: 'pending' | 'processing' | 'ready' | 'error';
+}
+
+
 function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], onUploadSuccess: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [moderationError, setModerationError] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
-  const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
+  const [filesToUpload, setFilesToUpload] = useState<UploadableFile[]>([]);
 
   const { toast } = useToast();
 
+  const processFile = async (file: File, id: number) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+        const uri = reader.result as string;
+
+        try {
+            const dimensions = await getImageDimensions(uri);
+            
+            setFilesToUpload(prev => prev.map(f => f.id === id ? { ...f, dimensions, status: 'processing' } : f));
+            
+            const moderationPromise = moderateImage({ photoDataUri: uri });
+            const captionPromise = generateCaption({ photoDataUri: uri });
+
+            const [moderationResult, captionResult] = await Promise.all([
+              moderationPromise,
+              captionPromise,
+            ]);
+
+            setFilesToUpload(prev => prev.map(f => f.id === id ? {
+                ...f,
+                title: captionResult.title,
+                moderation: {
+                    isAppropriate: moderationResult.isAppropriate,
+                    reason: moderationResult.reason || '',
+                },
+                status: moderationResult.isAppropriate ? 'ready' : 'error',
+            } : f));
+            
+            if (!moderationResult.isAppropriate) {
+                toast({ title: `Image Flagged: ${file.name}`, description: moderationResult.reason, variant: 'destructive'})
+            } else {
+                 toast({ title: 'Ready to Upload', description: `${file.name} is ready.`})
+            }
+
+        } catch (error) {
+            console.error("Processing failed:", error);
+            setFilesToUpload(prev => prev.map(f => f.id === id ? { ...f, status: 'error', moderation: { isAppropriate: false, reason: 'Processing failed.' } } : f));
+        }
+    };
+  }
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+    const selectedFiles = e.target.files;
+    if (!selectedFiles) return;
 
     resetDialogState(true);
-    setFile(selectedFile);
-    setIsProcessing(true);
     
-    const reader = new FileReader();
-    reader.readAsDataURL(selectedFile);
-    reader.onload = async () => {
-      const uri = reader.result as string;
-      setFileDataUri(uri);
+    const newFiles: UploadableFile[] = Array.from(selectedFiles).map((file, index) => ({
+        id: Date.now() + index,
+        file,
+        dataUri: URL.createObjectURL(file), // For preview
+        title: '',
+        category: galleries[0]?.id || '',
+        dimensions: { width: 0, height: 0 },
+        moderation: { isAppropriate: true, reason: '' },
+        status: 'pending',
+    }));
+    
+    setFilesToUpload(newFiles);
 
-      try {
-        const dimensions = await getImageDimensions(uri);
-        setImageDimensions(dimensions);
-
-        const moderationPromise = moderateImage({ photoDataUri: uri });
-        const captionPromise = generateCaption({ photoDataUri: uri });
-
-        const [moderationResult, captionResult] = await Promise.all([
-          moderationPromise,
-          captionPromise,
-        ]);
-        
-        if (!moderationResult.isAppropriate) {
-          setModerationError(moderationResult.reason || 'The image was flagged as inappropriate.');
-        } else {
-          toast({ title: 'Image approved', description: 'The image passed moderation.' });
-        }
-        
-        setTitle(captionResult.title);
-        toast({ title: 'Caption Generated!', description: 'An AI-powered title has been created.' });
-
-      } catch (error) {
-        console.error("Processing failed:", error);
-        toast({ title: "Error", description: "An error occurred during image processing.", variant: "destructive" });
-        setModerationError('An error occurred during processing.');
-      } finally {
-        setIsProcessing(false);
-      }
-    };
+    newFiles.forEach(file => processFile(file.file, file.id));
   };
-
+  
   const getImageDimensions = (uri: string): Promise<{width: number, height: number}> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const img = document.createElement('img');
-        img.onload = () => {
-            resolve({ width: img.width, height: img.height });
-        };
+        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onerror = () => reject('Could not load image');
         img.src = uri;
     });
   }
 
   const resetDialogState = (keepOpen: boolean = false) => {
-    setIsProcessing(false);
-    setModerationError(null);
-    setTitle('');
-    setCategory('');
-    setFile(null);
-    setFileDataUri(null);
-    setImageDimensions(null);
+    setFilesToUpload([]);
     setIsUploading(false);
     if (!keepOpen) {
       setIsOpen(false);
@@ -409,45 +512,49 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
   }
 
   const handleUpload = async () => {
-    if (!file || !category || !title || !imageDimensions) {
-        toast({ title: 'Missing Information', description: 'Please fill out all fields before uploading.', variant: 'destructive' });
+    const filesToSave = filesToUpload.filter(f => f.status === 'ready');
+    if (filesToSave.length === 0) {
+        toast({ title: 'No Files to Upload', description: 'Please select and process files before uploading.', variant: 'destructive' });
         return;
     }
     setIsUploading(true);
 
     try {
-        // 1. Upload to Storage
-        const storageRef = ref(storage, `photos/${Date.now()}-${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file, { contentType: file.type });
-        const downloadURL = await getDownloadURL(snapshot.ref);
+        await Promise.all(filesToSave.map(async (fileToSave) => {
+            const storageRef = ref(storage, `photos/${Date.now()}-${fileToSave.file.name}`);
+            const snapshot = await uploadBytes(storageRef, fileToSave.file, { contentType: fileToSave.file.type });
+            const downloadURL = await getDownloadURL(snapshot.ref);
 
-        // 2. Save to Firestore 'photos' collection
-        const photoDocRef = await addDoc(collection(db, 'photos'), {
-            title,
-            url: downloadURL,
-            width: imageDimensions.width,
-            height: imageDimensions.height,
-            createdAt: new Date(),
-        });
+            const photoDocRef = await addDoc(collection(db, 'photos'), {
+                title: fileToSave.title,
+                url: downloadURL,
+                width: fileToSave.dimensions.width,
+                height: fileToSave.dimensions.height,
+                createdAt: new Date(),
+            });
 
-        // 3. Update gallery 'photoIds'
-        const galleryRef = doc(db, 'galleries', category);
-        await updateDoc(galleryRef, {
-            photoIds: arrayUnion(photoDocRef.id)
-        });
+            const galleryRef = doc(db, 'galleries', fileToSave.category);
+            await updateDoc(galleryRef, {
+                photoIds: arrayUnion(photoDocRef.id)
+            });
+        }));
 
-        toast({ title: 'Upload Successful!', description: 'Your photo has been saved.' });
-        onUploadSuccess(); // Refresh data on the main page
-        resetDialogState(); // Close and reset the dialog
+        toast({ title: 'Upload Successful!', description: `${filesToSave.length} photo(s) have been saved.` });
+        onUploadSuccess();
+        resetDialogState();
         
     } catch(error) {
         console.error("Upload failed:", error);
-        toast({ title: 'Upload Failed', description: 'An error occurred while uploading your photo.', variant: 'destructive'});
+        toast({ title: 'Upload Failed', description: 'An error occurred while uploading photos.', variant: 'destructive'});
         setIsUploading(false);
     }
   }
+  
+  const handleSingleFileUpdate = (id: number, field: 'title' | 'category', value: string) => {
+      setFilesToUpload(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f));
+  }
 
-  const isActionDisabled = isProcessing || isUploading || !file || !category || !title || !!moderationError;
+  const isActionDisabled = filesToUpload.some(f => f.status === 'processing') || isUploading || filesToUpload.length === 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -455,62 +562,75 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
         if (!open) resetDialogState();
     }}>
       <DialogTrigger asChild>
-        <Button><Upload className="mr-2 h-4 w-4" />Upload Photo</Button>
+        <Button><Upload className="mr-2 h-4 w-4" />Upload Photos</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Upload New Photo</DialogTitle>
+          <DialogTitle>Upload New Photos</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="photo-file" className="text-right">Photo</Label>
-              <Input id="photo-file" name="file" type="file" className="col-span-3" onChange={handleFileChange} accept="image/*" disabled={isProcessing || isUploading} />
+              <Label htmlFor="photo-file" className="text-right">Photo(s)</Label>
+              <Input id="photo-file" name="file" type="file" className="col-span-3" onChange={handleFileChange} accept="image/*" disabled={isUploading} multiple />
             </div>
 
-            {isProcessing && (
-              <div className="col-span-4 flex items-center justify-center p-4">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                <span>Analyzing image with AI...</span>
-              </div>
-            )}
-
-            {moderationError && (
-              <Alert variant="destructive" className="col-span-4">
-                <ShieldOff className="h-4 w-4" />
-                <AlertTitle>Image Flagged</AlertTitle>
-                <AlertDescription>{moderationError}</AlertDescription>
-              </Alert>
-            )}
-
-            {file && !isProcessing && (
-                <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="title" className="text-right">Title</Label>
-                        <Input id="title" name="title" placeholder="e.g., Sunset Over The Lake" className="col-span-3" value={title} onChange={(e) => setTitle(e.target.value)} disabled={isUploading || !!moderationError} />
+            {filesToUpload.length > 0 && (
+                <ScrollArea className="h-72 w-full rounded-md border p-4">
+                    <div className="space-y-4">
+                        {filesToUpload.map((file) => (
+                            <div key={file.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                <Image src={file.dataUri} alt="preview" width={100} height={100} className="rounded-md object-cover" />
+                                <div className="col-span-2 space-y-2">
+                                    {file.status === 'pending' && <p className="text-sm text-muted-foreground">Waiting to process...</p>}
+                                    {file.status === 'processing' && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processing...</div>}
+                                    {file.status === 'error' && (
+                                        <Alert variant="destructive">
+                                          <ShieldOff className="h-4 w-4" />
+                                          <AlertTitle>Image Flagged</AlertTitle>
+                                          <AlertDescription>{file.moderation.reason}</AlertDescription>
+                                        </Alert>
+                                    )}
+                                    {file.status === 'ready' && (
+                                        <div className="grid gap-2">
+                                            <Input 
+                                                value={file.title} 
+                                                onChange={(e) => handleSingleFileUpdate(file.id, 'title', e.target.value)} 
+                                                placeholder="Enter title"
+                                            />
+                                            <Select 
+                                                defaultValue={file.category} 
+                                                onValueChange={(val) => handleSingleFileUpdate(file.id, 'category', val)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {galleries.map(g => (
+                                                      <SelectItem key={g.id} value={g.id}>{g.category}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="category" className="text-right">Category</Label>
-                        <Select name="category" onValueChange={setCategory} value={category} disabled={isUploading || !!moderationError}>
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {galleries.map(g => (
-                              <SelectItem key={g.id} value={g.id}>{g.category}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                    </div>
-                </>
+                </ScrollArea>
             )}
         </div>
         <DialogFooter>
+            <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+            </DialogClose>
             <Button type="button" onClick={handleUpload} disabled={isActionDisabled}>
-              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Photo' }
+              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Upload ${filesToUpload.filter(f=> f.status === 'ready').length} Photos` }
             </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+    
