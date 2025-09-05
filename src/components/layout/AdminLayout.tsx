@@ -33,11 +33,10 @@ import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
 
 const menuItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/photos', label: 'Photos', icon: ImageIcon },
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
-  { href: '/admin/theme', label: 'Theme', icon: Palette },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
