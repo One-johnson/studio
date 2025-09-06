@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Autoplay from "embla-carousel-autoplay"
 import Fade from 'embla-carousel-fade'
+import logo from '@/images/logo.png';
 
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -78,7 +79,7 @@ export default function HomePage() {
                       src={photo.url}
                       alt={photo.title || "Hero background"}
                       fill
-                      className="object-cover"
+                      className="object-cover -z-10"
                       priority
                       data-ai-hint="dramatic landscape"
                     />
@@ -103,9 +104,7 @@ export default function HomePage() {
             <>
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="relative z-10 p-4 fade-in">
-                    <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl tracking-tight">
-                    Clustergh
-                    </h1>
+                    <Image src={logo} alt="Clustergh logo" width={400} className="mx-auto" />
                     <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body">
                     {homepageContent?.heroTagline}
                     </p>

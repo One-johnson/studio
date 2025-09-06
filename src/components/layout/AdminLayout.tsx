@@ -7,7 +7,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { getAuth, onAuthStateChanged, signOut, User } from 'firebase/auth'
 import { app } from '@/lib/firebase'
 import {
-  Camera,
   LayoutDashboard,
   Image as ImageIcon,
   FileText,
@@ -28,9 +27,10 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
+import Image from 'next/image';
+import logo from '@/images/logo.png';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -96,11 +96,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-between p-2">
-            <div className="flex items-center gap-2">
-              <Camera className="w-6 h-6 text-sidebar-primary" />
-              <span className="text-xl font-headline font-semibold text-sidebar-foreground group-data-[state=collapsed]:hidden">
-                Clustergh
-              </span>
+            <div className="flex items-center gap-2 p-2">
+                <Link href="/admin">
+                    <Image src={logo} alt="Clustergh logo" width={120} className="group-data-[state=collapsed]:hidden" />
+                    <Image src={logo} alt="Clustergh logo" width={32} className="hidden group-data-[state=collapsed]:block" />
+                </Link>
             </div>
             <SidebarTrigger className="md:hidden"/>
           </div>

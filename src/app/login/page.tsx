@@ -9,9 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Camera, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Image from 'next/image';
+import logo from '@/images/logo.png';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,9 +49,8 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="flex justify-center items-center gap-2 mb-4">
-            <Camera className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-headline">Clustergh</h1>
+          <div className="flex justify-center items-center mb-4">
+            <Image src={logo} alt="Clustergh logo" width={180} />
           </div>
           <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
           <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
