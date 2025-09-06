@@ -181,7 +181,7 @@ export default function PortfolioPage() {
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-16 md:py-24">
-        <h1 className="text-4xl md:text-6xl font-headline text-center mb-4">
+        <h1 className="text-3xl md:text-5xl font-headline text-center mb-4">
           Our Portfolio
         </h1>
         <p className="text-center text-lg text-muted-foreground max-w-2xl mx-auto mb-12">

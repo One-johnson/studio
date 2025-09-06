@@ -9,7 +9,7 @@ export default async function AboutPage() {
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-16 md:py-24">
-        <h1 className="text-4xl md:text-6xl font-headline text-center mb-12">
+        <h1 className="text-3xl md:text-5xl font-headline text-center mb-12">
           About The Artist
         </h1>
 
