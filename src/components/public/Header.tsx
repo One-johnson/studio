@@ -44,7 +44,7 @@ export default function Header() {
         <div className="flex h-20 items-center justify-between">
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-              <Image src={logo} alt="Clustergh logo" className="h-10 w-auto" />
+              <Image src={logo} alt="Clustergh logo" className="h-12 w-12" />
             </Link>
           </div>
           
