@@ -104,7 +104,7 @@ export default function HomePage() {
             <>
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="relative z-10 p-4 fade-in">
-                    <Image src={logo} alt="Clustergh logo" width={400} className="mx-auto" />
+                    <h1 className="text-6xl md:text-8xl font-headline text-white">Clustergh</h1>
                     <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto font-body">
                     {homepageContent?.heroTagline}
                     </p>
