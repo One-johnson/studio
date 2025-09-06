@@ -1,3 +1,4 @@
+
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, query, limit, orderBy } from 'firebase/firestore';
 import type { Photo, Gallery, Service, AboutContent, HomepageContent } from '@/lib/types';
@@ -5,7 +6,10 @@ import type { Photo, Gallery, Service, AboutContent, HomepageContent } from '@/l
 export async function getPhotos(): Promise<Photo[]> {
   const photosCollection = collection(db, 'photos');
   const photoSnapshot = await getDocs(photosCollection);
-  return photoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Photo));
+  return photoSnapshot.docs.map(doc => {
+      const { createdAt, ...data } = doc.data();
+      return { id: doc.id, ...data } as Photo
+  });
 }
 
 export async function getRecentPhotos(count: number): Promise<Photo[]> {
