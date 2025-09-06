@@ -34,15 +34,15 @@ export default function ContactPage() {
             <div className="space-y-4 text-lg">
               <div className="flex items-center gap-4">
                 <Mail className="h-6 w-6 text-primary" />
-                <a href="mailto:hello@clustergh.com" className="hover:text-primary transition-colors">hello@clustergh.com</a>
+                <a href="mailto:clusterghmedia@gmail.com" className="hover:text-primary transition-colors">clusterghmedia@gmail.com</a>
               </div>
               <div className="flex items-center gap-4">
                 <Phone className="h-6 w-6 text-primary" />
-                <span>(555) 123-4567</span>
+                <span>0241866720 / 0559356400</span>
               </div>
               <div className="flex items-center gap-4">
                 <MapPin className="h-6 w-6 text-primary" />
-                <span>123 Photo Lane, Artville, USA</span>
+                <span>Dansoman St, near Hansonic</span>
               </div>
             </div>
              <p className="text-muted-foreground">For a faster response, please use the contact form. We look forward to creating something beautiful together!</p>
