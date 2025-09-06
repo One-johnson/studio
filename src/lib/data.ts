@@ -11,7 +11,11 @@ export async function getPhotos(): Promise<Photo[]> {
 export async function getRecentPhotos(count: number): Promise<Photo[]> {
   const q = query(collection(db, 'photos'), orderBy('createdAt', 'desc'), limit(count));
   const photoSnapshot = await getDocs(q);
-  return photoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Photo));
+  // Omit createdAt to avoid serialization issues between server and client components
+  return photoSnapshot.docs.map(doc => {
+      const { createdAt, ...data } = doc.data();
+      return { id: doc.id, ...data } as Photo;
+  });
 }
 
 export async function getGalleries(): Promise<Gallery[]> {
