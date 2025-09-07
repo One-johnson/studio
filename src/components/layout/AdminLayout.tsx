@@ -98,8 +98,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between p-2">
             <div className="flex items-center gap-2 p-2">
                 <Link href="/admin">
-                    <Image src={logo} alt="Clustergh logo" width={120} className="group-data-[state=collapsed]:hidden" />
-                    <Image src={logo} alt="Clustergh logo" width={32} className="hidden group-data-[state=collapsed]:block" />
+                     <Image 
+                        src={logo} 
+                        alt="Clustergh logo" 
+                        width={100}
+                        className="w-full transition-all group-data-[state=collapsed]:w-8 group-data-[state=collapsed]:h-auto" 
+                     />
                 </Link>
             </div>
             <SidebarTrigger className="md:hidden"/>
