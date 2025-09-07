@@ -330,17 +330,32 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
 
   const { toast } = useToast();
   const [generatingTitleId, setGeneratingTitleId] = useState<string | null>(null);
+  
+  const imageUrlToDataUri = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
 
   const handleGenerateTitle = async (photo: Photo) => {
     setGeneratingTitleId(photo.id);
     try {
-        const { title } = await generateCaption({ photoDataUri: photo.url });
+        // To avoid API size limits, we fetch the image client-side and convert to a data URI.
+        // This is effectively a proxy that also resizes/compresses the image in the browser.
+        const dataUri = await imageUrlToDataUri(photo.url);
+        const { title } = await generateCaption({ photoDataUri: dataUri });
+        
         await updateDoc(doc(db, 'photos', photo.id), { title });
         toast({ title: "Success", description: "AI-generated title has been saved." });
         onUpdatePhoto();
     } catch(err) {
         console.error("Failed to generate title", err);
-        toast({ title: "Error", description: "Could not generate title.", variant: "destructive" });
+        toast({ title: "Error", description: "Could not generate title. The image may be too large.", variant: "destructive" });
     } finally {
         setGeneratingTitleId(null);
     }
@@ -827,6 +842,3 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     </Dialog>
   );
 }
-
-
-
