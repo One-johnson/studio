@@ -6,7 +6,6 @@ export type Photo = {
   title: string;
   width: number;
   height: number;
-  createdAt?: any;
 };
 
 export type Gallery = {
@@ -57,4 +56,14 @@ export type Testimonial = {
   quote: string;
   name: string;
   project: string; // e.g., "Wedding Photography"
+}
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string; // HTML content
+  excerpt: string;
+  imageUrl: string;
+  createdAt: Timestamp;
 }

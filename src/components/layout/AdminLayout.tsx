@@ -14,6 +14,7 @@ import {
   LogOut,
   Loader2,
   ExternalLink,
+  PenSquare
 } from 'lucide-react'
 import {
   SidebarProvider,
@@ -35,6 +36,7 @@ import logo from '@/images/logo.png';
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/photos', label: 'Photos', icon: ImageIcon },
+  { href: '/admin/blog', label: 'Blog', icon: PenSquare },
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
 ]
@@ -115,7 +117,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   tooltip={{ children: item.label, side: 'right' }}
                 >
                   <Link href={item.href}>
@@ -152,7 +154,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <SidebarTrigger className="hidden md:flex"/>
           <div className="flex-1">
             <h1 className="text-lg font-semibold font-headline">
-              {menuItems.find(item => item.href === pathname)?.label || 'Admin'}
+              {menuItems.find(item => pathname.startsWith(item.href))?.label || 'Admin'}
             </h1>
           </div>
         </header>
