@@ -51,3 +51,10 @@ export type Message = {
   message: string;
   createdAt: Timestamp;
 }
+
+export type Testimonial = {
+  id: string;
+  quote: string;
+  name: string;
+  project: string; // e.g., "Wedding Photography"
+}

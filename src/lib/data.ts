@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, query, limit, orderBy } from 'firebase/firestore';
-import type { Photo, Gallery, Service, AboutContent, HomepageContent } from '@/lib/types';
+import type { Photo, Gallery, Service, AboutContent, HomepageContent, Testimonial } from '@/lib/types';
 
 export async function getPhotos(): Promise<Photo[]> {
   const photosCollection = collection(db, 'photos');
@@ -123,4 +123,17 @@ export async function getServices(): Promise<Service[]> {
       { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events.', features: [] },
     ];
   }
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  const testimonialsCollection = collection(db, 'testimonials');
+  const snapshot = await getDocs(testimonialsCollection);
+  if (snapshot.empty) {
+    return [
+      { id: '1', name: 'Emily & John', project: 'Wedding Photography', quote: "Choosing this photographer was the best decision we made for our wedding. The photos are absolutely breathtaking and capture the joy of our day perfectly. We couldn't be happier!" },
+      { id: '2', name: 'The Davis Family', project: 'Family Portraits', quote: "An amazing experience from start to finish! They made our family feel so comfortable, and the resulting photos are cherished treasures. Highly recommend!" },
+      { id: '3', name: 'Sarah L.', project: 'Headshot Session', quote: "Incredibly professional and talented. I needed new headshots for my business, and the results exceeded all my expectations. The quality and style are top-notch." },
+    ];
+  }
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial));
 }

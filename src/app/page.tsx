@@ -1,13 +1,14 @@
 
 import PublicLayout from '@/components/layout/PublicLayout';
-import { getFeaturedGalleries, getHomepageContent } from '@/lib/data';
+import { getFeaturedGalleries, getHomepageContent, getTestimonials } from '@/lib/data';
 import HomePageClient from '@/components/public/HomePageClient';
 
 export default async function HomePage() {
   // Fetch data on the server
-  const [featuredGalleries, homepageContent] = await Promise.all([
+  const [featuredGalleries, homepageContent, testimonials] = await Promise.all([
     getFeaturedGalleries(),
     getHomepageContent(),
+    getTestimonials(),
   ]);
 
   return (
@@ -15,6 +16,7 @@ export default async function HomePage() {
       <HomePageClient
         featuredGalleries={featuredGalleries}
         homepageContent={homepageContent}
+        testimonials={testimonials}
       />
     </PublicLayout>
   );
