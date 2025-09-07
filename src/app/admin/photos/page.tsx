@@ -158,7 +158,7 @@ export default function AdminPhotosPage() {
                 const currentGalleryRef = doc(db, 'galleries', currentGallery.id);
                 batch.update(currentGalleryRef, { photoIds: arrayRemove(photoId) });
             }
-            if (newGallery) {
+            if (newGallery && newCategory !== 'uncategorized') {
                 const newGalleryRef = doc(db, 'galleries', newGallery.id);
                 batch.update(newGalleryRef, { photoIds: arrayUnion(photoId) });
             }
@@ -488,7 +488,7 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
 function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, isProcessing, trigger }: { photo: Photo, currentGalleryId: string, galleries: Gallery[], onSave: (photoId: string, newTitle: string, newCategory: string) => void, isProcessing: boolean, trigger: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(photo.title);
-    const [category, setCategory] = useState(currentGalleryId);
+    const [category, setCategory] = useState(currentGalleryId || 'uncategorized');
 
     const handleSave = () => {
         onSave(photo.id, title, category);
@@ -516,6 +516,7 @@ function EditPhotoDialog({ photo, currentGalleryId, galleries, onSave, isProcess
                             <SelectValue placeholder="Select a category" />
                           </SelectTrigger>
                           <SelectContent>
+                             <SelectItem value="uncategorized">Uncategorized</SelectItem>
                             {galleries.map(g => (
                               <SelectItem key={g.id} value={g.id}>{g.category}</SelectItem>
                             ))}
@@ -686,7 +687,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
         file,
         dataUri: URL.createObjectURL(file), // For preview
         title: file.name.split('.').slice(0, -1).join('.'), // Use filename as title
-        category: galleries[0]?.id || '',
+        category: galleries[0]?.id || 'uncategorized',
         dimensions: { width: 0, height: 0 },
         moderation: { isAppropriate: true, reason: '' },
         status: 'pending',
@@ -738,7 +739,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
                 createdAt: new Date(),
             });
 
-            if (fileToSave.category) {
+            if (fileToSave.category && fileToSave.category !== 'uncategorized') {
               const galleryRef = doc(db, 'galleries', fileToSave.category);
               batch.update(galleryRef, {
                   photoIds: arrayUnion(photoDocRef.id)
@@ -815,7 +816,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
                                                     <SelectValue placeholder="Select a category" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="">Uncategorized</SelectItem>
+                                                    <SelectItem value="uncategorized">Uncategorized</SelectItem>
                                                     {galleries.map(g => (
                                                       <SelectItem key={g.id} value={g.id}>{g.category}</SelectItem>
                                                     ))}
