@@ -274,6 +274,7 @@ export default function AdminPhotosPage() {
                 selectedPhotos={selectedPhotos}
                 onSelectionChange={setSelectedPhotos}
                 isProcessing={isProcessing}
+                onUpdatePhoto={fetchData}
               />
             </TabsContent>
 
@@ -289,6 +290,7 @@ export default function AdminPhotosPage() {
                           selectedPhotos={selectedPhotos}
                           onSelectionChange={setSelectedPhotos}
                           isProcessing={isProcessing}
+                          onUpdatePhoto={fetchData}
                         />
                     </TabsContent>
                 )
@@ -317,12 +319,31 @@ interface PhotosTableProps {
   onDelete: (photo: Photo) => void;
   onEdit: (photoId: string, newTitle: string, newCategory: string) => void;
   isProcessing: boolean;
+  onUpdatePhoto: () => void;
 }
 
-function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onDelete, onEdit, isProcessing }: PhotosTableProps) {
+function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onDelete, onEdit, isProcessing, onUpdatePhoto }: PhotosTableProps) {
   const findPhotoCategoryInfo = (photoId: string) => {
     const gallery = galleries.find(g => g.photoIds?.includes(photoId));
     return { category: gallery?.category || 'Uncategorized', galleryId: gallery?.id || '' };
+  }
+
+  const { toast } = useToast();
+  const [generatingTitleId, setGeneratingTitleId] = useState<string | null>(null);
+
+  const handleGenerateTitle = async (photo: Photo) => {
+    setGeneratingTitleId(photo.id);
+    try {
+        const { title } = await generateCaption({ photoDataUri: photo.url });
+        await updateDoc(doc(db, 'photos', photo.id), { title });
+        toast({ title: "Success", description: "AI-generated title has been saved." });
+        onUpdatePhoto();
+    } catch(err) {
+        console.error("Failed to generate title", err);
+        toast({ title: "Error", description: "Could not generate title.", variant: "destructive" });
+    } finally {
+        setGeneratingTitleId(null);
+    }
   }
 
   const handleSelectAll = (checked: boolean) => {
@@ -386,7 +407,18 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
                 <TableCell>
                   <Image src={photo.url} alt={photo.title} width={64} height={64} className="rounded-md object-cover" data-ai-hint="thumbnail" />
                 </TableCell>
-                <TableCell className="font-medium">{photo.title}</TableCell>
+                <TableCell className="font-medium flex items-center gap-2">
+                  {photo.title}
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-6 w-6" 
+                    onClick={() => handleGenerateTitle(photo)} 
+                    disabled={generatingTitleId === photo.id}
+                  >
+                    {generatingTitleId === photo.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  </Button>
+                </TableCell>
                 <TableCell>
                   <Badge variant="outline">{category}</Badge>
                 </TableCell>
@@ -604,17 +636,10 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
             
             setFilesToUpload(prev => prev.map(f => f.id === id ? { ...f, dimensions, status: 'processing' } : f));
             
-            const moderationPromise = moderateImage({ photoDataUri: uri });
-            const captionPromise = generateCaption({ photoDataUri: uri });
-
-            const [moderationResult, captionResult] = await Promise.all([
-              moderationPromise,
-              captionPromise,
-            ]);
+            const moderationResult = await moderateImage({ photoDataUri: uri });
 
             setFilesToUpload(prev => prev.map(f => f.id === id ? {
                 ...f,
-                title: captionResult.title,
                 moderation: {
                     isAppropriate: moderationResult.isAppropriate,
                     reason: moderationResult.reason || '',
@@ -645,7 +670,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
         id: Date.now() + index,
         file,
         dataUri: URL.createObjectURL(file), // For preview
-        title: '',
+        title: file.name.split('.').slice(0, -1).join('.'), // Use filename as title
         category: galleries[0]?.id || '',
         dimensions: { width: 0, height: 0 },
         moderation: { isAppropriate: true, reason: '' },
@@ -698,10 +723,12 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
                 createdAt: new Date(),
             });
 
-            const galleryRef = doc(db, 'galleries', fileToSave.category);
-            batch.update(galleryRef, {
-                photoIds: arrayUnion(photoDocRef.id)
-            });
+            if (fileToSave.category) {
+              const galleryRef = doc(db, 'galleries', fileToSave.category);
+              batch.update(galleryRef, {
+                  photoIds: arrayUnion(photoDocRef.id)
+              });
+            }
         }));
         
         await batch.commit();
@@ -773,6 +800,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
                                                     <SelectValue placeholder="Select a category" />
                                                 </SelectTrigger>
                                                 <SelectContent>
+                                                    <SelectItem value="">Uncategorized</SelectItem>
                                                     {galleries.map(g => (
                                                       <SelectItem key={g.id} value={g.id}>{g.category}</SelectItem>
                                                     ))}
@@ -799,5 +827,6 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     </Dialog>
   );
 }
+
 
 
