@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         src={logo} 
                         alt="Clustergh logo" 
                         width={100}
-                        className="w-full transition-all group-data-[state=collapsed]:w-8 group-data-[state=collapsed]:h-auto" 
+                        className="w-24 transition-all group-data-[state=collapsed]:w-8 group-data-[state=collapsed]:h-auto" 
                      />
                 </Link>
             </div>
