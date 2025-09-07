@@ -345,8 +345,6 @@ function PhotosTable({ photos, galleries, selectedPhotos, onSelectionChange, onD
   const handleGenerateTitle = async (photo: Photo) => {
     setGeneratingTitleId(photo.id);
     try {
-        // To avoid API size limits, we fetch the image client-side and convert to a data URI.
-        // This is effectively a proxy that also resizes/compresses the image in the browser.
         const dataUri = await imageUrlToDataUri(photo.url);
         const { title } = await generateCaption({ photoDataUri: dataUri });
         
@@ -724,12 +722,17 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     setIsUploading(true);
 
     try {
-        const batch = writeBatch(db);
-        await Promise.all(filesToSave.map(async (fileToSave) => {
+        const uploadPromises = filesToSave.map(async (fileToSave) => {
             const storageRef = ref(storage, `photos/${Date.now()}-${fileToSave.file.name}`);
             const snapshot = await uploadBytes(storageRef, fileToSave.file, { contentType: fileToSave.file.type });
             const downloadURL = await getDownloadURL(snapshot.ref);
+            return { fileToSave, downloadURL };
+        });
 
+        const uploadedFiles = await Promise.all(uploadPromises);
+        
+        const batch = writeBatch(db);
+        uploadedFiles.forEach(({ fileToSave, downloadURL }) => {
             const photoDocRef = doc(collection(db, 'photos'));
             batch.set(photoDocRef, {
                 title: fileToSave.title,
@@ -745,7 +748,7 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
                   photoIds: arrayUnion(photoDocRef.id)
               });
             }
-        }));
+        });
         
         await batch.commit();
 
