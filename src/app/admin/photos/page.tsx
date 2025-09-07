@@ -722,39 +722,53 @@ function UploadDialog({ galleries, onUploadSuccess }: { galleries: Gallery[], on
     setIsUploading(true);
 
     try {
-        const uploadPromises = filesToSave.map(async (fileToSave) => {
-            const storageRef = ref(storage, `photos/${Date.now()}-${fileToSave.file.name}`);
-            const snapshot = await uploadBytes(storageRef, fileToSave.file, { contentType: fileToSave.file.type });
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            return { fileToSave, downloadURL };
+      // Step 1: Upload all files to storage in parallel
+      const uploadPromises = filesToSave.map(fileToSave => {
+        const storageRef = ref(storage, `photos/${Date.now()}-${fileToSave.file.name}`);
+        return uploadBytes(storageRef, fileToSave.file, { contentType: fileToSave.file.type })
+          .then(snapshot => getDownloadURL(snapshot.ref))
+          .then(downloadURL => ({
+            fileToSave,
+            downloadURL,
+          }));
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+
+      // Step 2: Perform a single batch write to Firestore
+      const batch = writeBatch(db);
+      const galleryUpdates: { [key: string]: string[] } = {};
+
+      uploadedFiles.forEach(({ fileToSave, downloadURL }) => {
+        const photoDocRef = doc(collection(db, 'photos'));
+        batch.set(photoDocRef, {
+            title: fileToSave.title,
+            url: downloadURL,
+            width: fileToSave.dimensions.width,
+            height: fileToSave.dimensions.height,
+            createdAt: new Date(),
         });
 
-        const uploadedFiles = await Promise.all(uploadPromises);
-        
-        const batch = writeBatch(db);
-        uploadedFiles.forEach(({ fileToSave, downloadURL }) => {
-            const photoDocRef = doc(collection(db, 'photos'));
-            batch.set(photoDocRef, {
-                title: fileToSave.title,
-                url: downloadURL,
-                width: fileToSave.dimensions.width,
-                height: fileToSave.dimensions.height,
-                createdAt: new Date(),
-            });
-
-            if (fileToSave.category && fileToSave.category !== 'uncategorized') {
-              const galleryRef = doc(db, 'galleries', fileToSave.category);
-              batch.update(galleryRef, {
-                  photoIds: arrayUnion(photoDocRef.id)
-              });
+        if (fileToSave.category && fileToSave.category !== 'uncategorized') {
+            if (!galleryUpdates[fileToSave.category]) {
+                galleryUpdates[fileToSave.category] = [];
             }
-        });
-        
-        await batch.commit();
+            galleryUpdates[fileToSave.category].push(photoDocRef.id);
+        }
+      });
+      
+      for (const galleryId in galleryUpdates) {
+          const galleryRef = doc(db, 'galleries', galleryId);
+          batch.update(galleryRef, {
+              photoIds: arrayUnion(...galleryUpdates[galleryId])
+          });
+      }
+      
+      await batch.commit();
 
-        toast({ title: 'Upload Successful!', description: `${filesToSave.length} photo(s) have been saved.` });
-        onUploadSuccess();
-        resetDialogState();
+      toast({ title: 'Upload Successful!', description: `${filesToSave.length} photo(s) have been saved.` });
+      onUploadSuccess();
+      resetDialogState();
         
     } catch(error) {
         console.error("Upload failed:", error);
