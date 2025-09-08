@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 40 50% 95%; /* Cream from logo */
+    --background: 40 50% 85%; /* Warm Cream from logo */
     --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
