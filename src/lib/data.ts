@@ -107,9 +107,9 @@ export async function getServices(): Promise<Service[]> {
     if (servicesSnapshot.empty) {
       // If there are no services in the database, return default/mock data.
       return [
-        { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice. Perfect for individuals, couples, or families.', features: [] },
-        { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day, from getting ready to the grand exit.', features: []},
-        { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events, parties, and other special occasions.', features: [] },
+        { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice. Perfect for individuals, couples, or families.', features: "Feature 1\nFeature 2" },
+        { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day, from getting ready to the grand exit.', features: "Feature 1\nFeature 2"},
+        { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events, parties, and other special occasions.', features: "Feature 1\nFeature 2" },
       ];
     }
     
@@ -118,9 +118,9 @@ export async function getServices(): Promise<Service[]> {
     console.error("Error fetching services: ", error);
     // Fallback to default data in case of an error
     return [
-      { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice.', features: [] },
-      { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day.', features: []},
-      { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events.', features: [] },
+        { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice.', features: "Feature 1\nFeature 2" },
+        { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day.', features: "Feature 1\nFeature 2"},
+        { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events.', features: "Feature 1\nFeature 2" },
     ];
   }
 }
@@ -132,9 +132,11 @@ export async function getPackages(): Promise<Package[]> {
     
     if (packagesSnapshot.empty) {
       return [
-        { id: 'bronze-package', title: 'Bronze Package', price: '$1,200', description: 'Ideal for small weddings or elopements, covering the essentials.', features: ['4 hours coverage', '1 Photographer', 'Online Gallery', '200+ Edited Photos'] },
-        { id: 'gold-package', title: 'Gold Package', price: '$4,500', description: 'Our most popular package, offering full-day coverage and an engagement session.', features: ['8 hours coverage', '2 Photographers', 'Engagement Session', '500+ Edited Photos', 'Custom USB Drive'] },
-        { id: 'platinum-package', title: 'Platinum Package', price: '$7,000', description: 'The ultimate experience with extended coverage, a premium album, and more.', features: ['12 hours coverage', '2 Photographers', 'Engagement Session', '700+ Edited Photos', 'Luxury Wedding Album', 'Parent Albums'] },
+        { id: 'regular', title: 'Regular', price: 'GHC500.00', description: '', features: 'Photoshoot session (up to 30mins)\nUse of ONE Outfit only\n20 plus standard digital images\n5 retouched images ONLY' },
+        { id: 'bronze', title: 'Bronze', price: 'GHC 700.00', description: '', features: 'Photoshoot session (up to 1hr)\nUse of ONE-TWO Outfit\n40 plus standard digital images\n8 retouched images ONLY' },
+        { id: 'silver', title: 'Silver', price: 'GHC 900.00', description: '', features: 'Photoshoot session (up to 1.3hrs)\nUse of TWO-THREE Outfits\n50 plus standard digital images\n10 retouched images ONLY' },
+        { id: 'gold', title: 'Gold', price: 'GHC 1200.00', description: '', features: 'Photoshoot session (up to 2hrs)\nUse of TWO-FOUR Outhits\n100 plus standard digital images\n15 retouched images ONLY' },
+        { id: 'diamond', title: 'Diamond', price: 'GHC 1700.00', description: '', features: 'Photoshoot session (up to 3hrs)\nUse of TWO-FOUR Outhits\n200 plus standard digital images\n20 retouched images ONLY' },
       ];
     }
     
@@ -142,9 +144,11 @@ export async function getPackages(): Promise<Package[]> {
   } catch (error) {
     console.error("Error fetching packages: ", error);
     return [
-        { id: 'bronze-package', title: 'Bronze Package', price: '$1,200', description: 'Ideal for small weddings or elopements, covering the essentials.', features: ['4 hours coverage', '1 Photographer', 'Online Gallery', '200+ Edited Photos'] },
-        { id: 'gold-package', title: 'Gold Package', price: '$4,500', description: 'Our most popular package, offering full-day coverage and an engagement session.', features: ['8 hours coverage', '2 Photographers', 'Engagement Session', '500+ Edited Photos', 'Custom USB Drive'] },
-        { id: 'platinum-package', title: 'Platinum Package', price: '$7,000', description: 'The ultimate experience with extended coverage, a premium album, and more.', features: ['12 hours coverage', '2 Photographers', 'Engagement Session', '700+ Edited Photos', 'Luxury Wedding Album', 'Parent Albums'] },
+        { id: 'regular', title: 'Regular', price: 'GHC500.00', description: '', features: 'Photoshoot session (up to 30mins)\nUse of ONE Outfit only\n20 plus standard digital images\n5 retouched images ONLY' },
+        { id: 'bronze', title: 'Bronze', price: 'GHC 700.00', description: '', features: 'Photoshoot session (up to 1hr)\nUse of ONE-TWO Outfit\n40 plus standard digital images\n8 retouched images ONLY' },
+        { id: 'silver', title: 'Silver', price: 'GHC 900.00', description: '', features: 'Photoshoot session (up to 1.3hrs)\nUse of TWO-THREE Outfits\n50 plus standard digital images\n10 retouched images ONLY' },
+        { id: 'gold', title: 'Gold', price: 'GHC 1200.00', description: '', features: 'Photoshoot session (up to 2hrs)\nUse of TWO-FOUR Outhits\n100 plus standard digital images\n15 retouched images ONLY' },
+        { id: 'diamond', title: 'Diamond', price: 'GHC 1700.00', description: '', features: 'Photoshoot session (up to 3hrs)\nUse of TWO-FOUR Outhits\n200 plus standard digital images\n20 retouched images ONLY' },
     ];
   }
 }

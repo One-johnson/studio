@@ -64,12 +64,12 @@ export default function ServicesPage() {
   
   return (
     <PublicLayout>
-      <div className="bg-card">
+      <div className="bg-teal-800">
         <div className="container mx-auto px-4 py-16 md:py-24 text-center">
-            <h1 className="text-3xl md:text-5xl font-headline mb-4">
+            <h1 className="text-3xl md:text-7xl font-headline mb-4 text-white">
               Our Services
             </h1>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-lg text-white max-w-3xl mx-auto">
               We offer a range of photography packages to suit your needs. Each package is designed to provide you with beautiful, high-quality images that you'll treasure for a lifetime.
             </p>
         </div>
