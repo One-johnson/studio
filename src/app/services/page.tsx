@@ -85,12 +85,12 @@ export default function ServicesPage() {
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="flex flex-col h-full min-h-[450px]">
-                <CardHeader className="p-8">
+              <Card className="flex flex-col h-full">
+                <CardHeader className="p-6">
                   <CardTitle className="font-headline text-3xl">{service.title}</CardTitle>
                   <CardDescription className="text-base">{service.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow p-8">
+                <CardContent className="flex-grow p-6">
                   <div className="mb-6">
                     <span className="text-5xl font-bold font-headline">{service.price}</span>
                     {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
@@ -104,7 +104,7 @@ export default function ServicesPage() {
                     ))}
                   </ul>
                 </CardContent>
-                <CardFooter className="p-8">
+                <CardFooter className="p-6">
                   <Button asChild className="w-full font-headline py-6 text-lg">
                     <Link href="/contact">Book Now</Link>
                   </Button>
