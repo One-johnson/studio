@@ -5,11 +5,11 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
-import logo from '@/images/logo.png';
 import { cn } from '@/lib/utils';
+import logo from '@/images/logo.png';
+import { Menu, X, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -23,7 +23,7 @@ const navLinks = [
 export default function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,62 +36,78 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled ? 'bg-background/80 backdrop-blur-sm shadow-md' : 'bg-transparent'
+        'sticky top-0 z-50 transition-all duration-300',
+        isScrolled ? 'bg-background/80 shadow-md backdrop-blur-sm' : 'bg-transparent'
       )}
     >
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-20">
-          <Link href="/">
-            <Image src={logo} alt="Clustergh logo" width={80} priority />
+        <div className="flex h-20 items-center justify-between">
+          <Link href="/" className="flex items-center">
+            <Image src={logo} alt="Clustergh logo" width={60} height={60} className="h-auto" priority />
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            {navLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  'font-headline text-lg relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300',
-                  pathname === href ? 'text-primary after:w-full' : 'hover:text-primary after:w-0 hover:after:w-full'
-                )}
-              >
-                {label}
-              </Link>
-            ))}
+          <nav className="hidden md:flex flex-1 justify-center items-center">
+            <ul className="flex space-x-6">
+              {navLinks.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className={cn(
+                      'font-headline text-sm uppercase tracking-wider transition-colors hover:text-primary',
+                      pathname === href ? 'text-primary font-bold' : 'text-foreground'
+                    )}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
 
+          <div className="hidden md:flex items-center justify-end space-x-4 w-[60px]">
+             <Button asChild variant="ghost" size="icon">
+                <Link href="/admin">
+                  <User className="h-5 w-5" />
+                   <span className="sr-only">Admin Dashboard</span>
+                </Link>
+              </Button>
+          </div>
+
+
           <div className="md:hidden">
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                 <Button variant="ghost" size="icon">
                   <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[250px] bg-background">
-                 <div className="flex justify-between items-center mb-8">
-                     <Link href="/" onClick={() => setIsOpen(false)}>
-                        <Image src={logo} alt="Clustergh logo" width={100} />
-                     </Link>
-                      <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                          <X className="h-6 w-6" />
-                      </Button>
-                </div>
-                <nav className="flex flex-col space-y-4">
+              <SheetContent side="left">
+                <div className="flex flex-col space-y-6 p-6">
+                   <Link href="/" className="mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Image src={logo} alt="Clustergh logo" width={100} />
+                  </Link>
                   {navLinks.map(({ href, label }) => (
                     <Link
                       key={href}
                       href={href}
-                      onClick={() => setIsOpen(false)}
                       className={cn(
-                        'font-headline text-2xl text-center py-2',
-                        pathname === href ? 'text-primary' : 'hover:text-primary'
+                        'text-lg font-headline transition-colors hover:text-primary',
+                        pathname === href ? 'text-primary' : 'text-foreground'
                       )}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {label}
                     </Link>
                   ))}
-                </nav>
+                   <Link
+                      href="/admin"
+                      className="text-lg font-headline transition-colors hover:text-primary text-foreground"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Admin
+                    </Link>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
