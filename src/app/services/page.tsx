@@ -64,7 +64,7 @@ export default function ServicesPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-4xl mx-auto">
           {services.map((service, index) => (
              <motion.div
               key={service.id}
@@ -75,27 +75,27 @@ export default function ServicesPage() {
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="flex flex-col h-full">
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl">{service.title}</CardTitle>
-                  <CardDescription>{service.description}</CardDescription>
+              <Card className="flex flex-col h-full min-h-[450px]">
+                <CardHeader className="p-8">
+                  <CardTitle className="font-headline text-3xl">{service.title}</CardTitle>
+                  <CardDescription className="text-base">{service.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent className="flex-grow p-8">
                   <div className="mb-6">
-                    <span className="text-4xl font-bold font-headline">{service.price}</span>
+                    <span className="text-5xl font-bold font-headline">{service.price}</span>
                     {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
                   </div>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {service.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                        <span className="text-sm">{feature}</span>
+                        <Check className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                        <span className="text-base">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </CardContent>
-                <CardFooter>
-                  <Button asChild className="w-full font-headline">
+                <CardFooter className="p-8">
+                  <Button asChild className="w-full font-headline py-6 text-lg">
                     <Link href="/contact">Book Now</Link>
                   </Button>
                 </CardFooter>
