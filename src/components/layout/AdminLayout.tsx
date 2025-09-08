@@ -14,6 +14,7 @@ import {
   LogOut,
   Loader2,
   ExternalLink,
+  Package,
 } from 'lucide-react'
 import {
   SidebarProvider,
@@ -35,6 +36,7 @@ import logo from '@/images/logo.png';
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/photos', label: 'Photos', icon: ImageIcon },
+  { href: '/admin/packages', label: 'Packages', icon: Package },
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
 ]
@@ -101,8 +103,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                      <Image 
                         src={logo} 
                         alt="Clustergh logo" 
-                        width={100}
-                        className="w-24 transition-all group-data-[state=collapsed]:w-8 group-data-[state=collapsed]:h-auto" 
+                        width={80}
+                        className="w-20 transition-all group-data-[state=collapsed]:w-8 group-data-[state=collapsed]:h-auto" 
                      />
                 </Link>
             </div>

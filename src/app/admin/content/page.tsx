@@ -14,13 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, getDocs, collection, addDoc, deleteDoc } from 'firebase/firestore';
 import type { AboutContent, Service, HomepageContent, TeamMember, Testimonial } from '@/lib/types';
-import { Loader2, Wand2, Plus, Trash2 } from 'lucide-react';
-import { generateServiceDescription } from '@/ai/flows/generate-service-description-flow';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-
-type ServicesFormData = {
-  services: Service[];
-};
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 
 type AboutFormData = {
   about: AboutContent;
@@ -36,12 +30,6 @@ export default function AdminContentPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-
-  const servicesForm = useForm<ServicesFormData>({
-    defaultValues: {
-      services: [],
-    },
-  });
   
   const aboutForm = useForm<AboutFormData>({
     defaultValues: {
@@ -55,11 +43,6 @@ export default function AdminContentPage() {
     defaultValues: {
       testimonials: [],
     },
-  });
-
-  const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
-    control: servicesForm.control,
-    name: "services",
   });
   
   const { fields: teamMemberFields, append: appendTeamMember, remove: removeTeamMember } = useFieldArray({
@@ -101,19 +84,6 @@ export default function AdminContentPage() {
         } else {
           setHomepageContent({ heroTagline: "Capturing life's moments, one frame at a time. Explore stunning visual stories through my lens." });
         }
-        
-        const servicesSnapshot = await getDocs(collection(db, 'services'));
-        let servicesData: Service[] = [];
-        if (servicesSnapshot.empty) {
-            servicesData = [
-                { id: 'portrait-session', title: 'Portrait Session', price: '$450', description: 'A 90-minute session at a location of your choice. Perfect for individuals, couples, or families.', features: [] },
-                { id: 'wedding-package', title: 'The Essential Wedding', price: '$3,200', description: 'Comprehensive coverage for your special day, from getting ready to the grand exit.', features: []},
-                { id: 'event-photography', title: 'Event Photography', price: 'Starting at $750', description: 'Professional photography for corporate events, parties, and other special occasions.', features: [] },
-            ];
-        } else {
-            servicesData = servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
-        }
-        servicesForm.reset({ services: servicesData });
 
         const testimonialsSnapshot = await getDocs(collection(db, 'testimonials'));
         const testimonialsData = testimonialsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial));
@@ -127,7 +97,7 @@ export default function AdminContentPage() {
       }
     }
     fetchData();
-  }, [toast, servicesForm, aboutForm, testimonialsForm]);
+  }, [toast, aboutForm, testimonialsForm]);
 
   const handleAboutSubmit = async (data: AboutFormData) => {
     setSaving(true);
@@ -154,20 +124,6 @@ export default function AdminContentPage() {
       setSaving(false);
     }
   };
-  
-  const handleServiceSubmit = async (serviceIndex: number) => {
-    const serviceData = servicesForm.getValues().services[serviceIndex];
-    if (!serviceData) return;
-    setSaving(true);
-    try {
-        await setDoc(doc(db, 'services', serviceData.id), serviceData, { merge: true });
-        toast({ title: "Success", description: `${serviceData.title} saved.` });
-    } catch(error) {
-        toast({ title: "Error", description: "Failed to save service.", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  }
 
   const handleTestimonialSave = async (index: number) => {
     const testimonial = testimonialsForm.getValues().testimonials[index];
@@ -231,10 +187,9 @@ export default function AdminContentPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="homepage">Homepage</TabsTrigger>
               <TabsTrigger value="about">About</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             </TabsList>
             <TabsContent value="homepage" className="mt-6">
@@ -295,85 +250,6 @@ export default function AdminContentPage() {
                   </Button>
               </form>
             </TabsContent>
-            <TabsContent value="services" className="mt-6">
-              <form onSubmit={servicesForm.handleSubmit(() => {})}>
-                <div className="space-y-8">
-                  {serviceFields.map((service, index) => (
-                    <Card key={service.id}>
-                      <CardHeader>
-                        <CardTitle>
-                          {servicesForm.watch(`services.${index}.title`)}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                           <div className="space-y-2">
-                            <Label htmlFor={`service-title-${index}`}>Title</Label>
-                            <Input
-                              id={`service-title-${index}`}
-                              {...servicesForm.register(`services.${index}.title`)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`service-price-${index}`}>Price</Label>
-                            <Input
-                              id={`service-price-${index}`}
-                              {...servicesForm.register(`services.${index}.price`)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`service-desc-${index}`}>Description</Label>
-                            <Textarea
-                              id={`service-desc-${index}`}
-                              {...servicesForm.register(`services.${index}.description`)}
-                              rows={3}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                              <Label>Features</Label>
-                              {servicesForm.watch(`services.${index}.features`, []).map((_, featureIndex) => (
-                                <div key={featureIndex} className="flex items-center gap-2">
-                                  <Input
-                                    {...servicesForm.register(`services.${index}.features.${featureIndex}`)}
-                                  />
-                                  <Button variant="ghost" size="icon" onClick={() => {
-                                      const currentFeatures = servicesForm.getValues(`services.${index}.features`);
-                                      currentFeatures.splice(featureIndex, 1);
-                                      servicesForm.setValue(`services.${index}.features`, currentFeatures);
-                                  }}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
-                              <Button variant="outline" size="sm" onClick={() => {
-                                const currentFeatures = servicesForm.getValues(`services.${index}.features`);
-                                servicesForm.setValue(`services.${index}.features`, [...currentFeatures, '']);
-                              }}>
-                                <Plus className="mr-2 h-4 w-4" /> Add Feature
-                              </Button>
-                          </div>
-
-                          <div className="flex gap-2">
-                              <Button type="button" size="sm" disabled={saving} onClick={() => handleServiceSubmit(index)}>
-                                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Service
-                              </Button>
-                              <GenerateDescriptionDialog 
-                                serviceTitle={servicesForm.watch(`services.${index}.title`)} 
-                                onGenerate={(data) => {
-                                  servicesForm.setValue(`services.${index}.description`, data.description);
-                                  servicesForm.setValue(`services.${index}.features`, data.features);
-                                }}
-                              />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </form>
-            </TabsContent>
             <TabsContent value="testimonials" className="mt-6">
                 <div className="space-y-4">
                   {testimonialFields.map((field, index) => (
@@ -413,62 +289,4 @@ export default function AdminContentPage() {
       </Card>
     </AdminLayout>
   );
-}
-
-function GenerateDescriptionDialog({ serviceTitle, onGenerate }: { serviceTitle: string, onGenerate: (data: { description: string, features: string[] }) => void }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [keywords, setKeywords] = useState('');
-    const { toast } = useToast();
-
-    const handleGenerate = async () => {
-        setIsGenerating(true);
-        try {
-            const result = await generateServiceDescription({ title: serviceTitle, keywords });
-            onGenerate(result);
-            toast({ title: "Success", description: "AI-generated content has been added to the form." });
-            setIsOpen(false);
-        } catch (error) {
-            console.error("Failed to generate description:", error);
-            toast({ title: "Error", description: "Could not generate content.", variant: "destructive" });
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button type="button" size="sm" variant="outline">
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Generate with AI
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Generate Service Content</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <p>
-                        Generate a new description and feature list for the service: <strong>{serviceTitle}</strong>
-                    </p>
-                    <div className="space-y-2">
-                        <Label htmlFor="keywords">Keywords (optional)</Label>
-                        <Input 
-                            id="keywords" 
-                            placeholder="e.g., candid, natural light, outdoor"
-                            value={keywords}
-                            onChange={(e) => setKeywords(e.target.value)}
-                        />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button type="button" onClick={handleGenerate} disabled={isGenerating}>
-                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                        Generate
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
 }

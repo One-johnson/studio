@@ -20,7 +20,7 @@ export default function Header() {
       <div className="container flex h-16 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/">
-            <Image src={logo} alt="Clustergh logo" width={80} priority />
+            <Image src={logo} alt="Clustergh logo" width={50} priority />
           </Link>
         </div>
 
