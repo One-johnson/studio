@@ -9,6 +9,16 @@ import Link from 'next/link';
 export default async function PackagesPage() {
   const packages = await getPackages();
 
+  const getFeatures = (features: string | string[]) => {
+    if (Array.isArray(features)) {
+      return features;
+    }
+    if (typeof features === 'string') {
+      return features.split('\n');
+    }
+    return [];
+  }
+
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-16 md:py-24">
@@ -33,7 +43,7 @@ export default async function PackagesPage() {
                   <span className="text-4xl font-bold font-headline">{pkg.price}</span>
                 </div>
                 <ul className="space-y-3">
-                  {pkg.features.split('\n').map((feature, i) => (
+                  {getFeatures(pkg.features).map((feature, i) => (
                     feature && <li key={i} className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
                       <span className="text-sm">{feature}</span>

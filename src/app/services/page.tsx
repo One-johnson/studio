@@ -42,6 +42,16 @@ export default function ServicesPage() {
     }),
   };
 
+  const getFeatures = (features: string | string[]) => {
+    if (Array.isArray(features)) {
+      return features;
+    }
+    if (typeof features === 'string') {
+      return features.split('\n');
+    }
+    return [];
+  }
+
   if (loading) {
     return (
       <PublicLayout>
@@ -86,7 +96,7 @@ export default function ServicesPage() {
                     {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
                   </div>
                   <ul className="space-y-4">
-                    {service.features.split('\n').map((feature, i) => (
+                    {getFeatures(service.features).map((feature, i) => (
                       feature && <li key={i} className="flex items-start gap-3">
                         <Check className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                         <span className="text-base">{feature}</span>
