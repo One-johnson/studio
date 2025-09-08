@@ -1,93 +1,111 @@
 
+
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { User, Menu, X } from 'lucide-react';
+import logo from '@/images/logo.png';
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, User } from 'lucide-react';
-import logo from '@/images/logo.png';
-import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/portfolio', label: 'Portfolio' },
-  { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
 
 export default function Header() {
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        {/* Left section for logo */}
-        <div className="flex-1 flex justify-start pl-8">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm shadow-sm">
+      <nav className="container mx-auto px-4 h-20 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex-shrink-0">
           <Link href="/">
-            <Image src={logo} alt="Clustergh logo" width={50} />
+            <Image src={logo} alt="Clustergh logo" width={150} priority />
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex flex-1 justify-center">
-          <ul className="flex items-center space-x-6 text-sm font-medium">
+        <div className="hidden md:flex flex-1 justify-center">
+            <ul className="flex items-center space-x-8">
             {navLinks.map((link) => (
-              <li key={link.href}>
+                <li key={link.href}>
                 <Link
-                  href={link.href}
-                  className={cn(
-                    'transition-colors hover:text-primary',
-                    pathname === link.href ? 'text-primary' : 'text-muted-foreground'
-                  )}
+                    href={link.href}
+                    className={cn(
+                    'font-headline text-lg transition-colors hover:text-primary',
+                    pathname === link.href ? 'text-primary' : 'text-foreground'
+                    )}
                 >
-                  {link.label}
+                    {link.label}
                 </Link>
-              </li>
+                </li>
             ))}
-          </ul>
-        </nav>
-
-        {/* Right section for login & mobile menu */}
-        <div className="flex flex-1 justify-end items-center gap-4">
-            <Button asChild variant="ghost" size="icon">
-                <Link href="/login">
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Login</span>
-                </Link>
-            </Button>
-
-            {/* Mobile Navigation */}
-            <Sheet>
-                <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu />
-                    <span className="sr-only">Toggle menu</span>
-                </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                <nav className="grid gap-6 text-lg font-medium mt-8">
-                    {navLinks.map((link) => (
-                    <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                        'transition-colors hover:text-primary',
-                        pathname === link.href ? 'text-foreground' : 'text-muted-foreground'
-                        )}
-                    >
-                        {link.label}
-                    </Link>
-                    ))}
-                </nav>
-                </SheetContent>
-            </Sheet>
+            </ul>
         </div>
-      </div>
+        
+        <div className="hidden md:flex items-center justify-end">
+            <Link href="/login">
+                <Button variant="ghost" size="icon">
+                    <User className="h-6 w-6" />
+                </Button>
+            </Link>
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Open menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[240px]">
+                <div className="flex flex-col h-full">
+                     <div className="flex-shrink-0 p-4">
+                        <Link href="/" onClick={() => setIsMenuOpen(false)}>
+                            <Image src={logo} alt="Clustergh logo" width={120} />
+                        </Link>
+                    </div>
+                    <ul className="flex flex-col space-y-4 p-4 flex-grow">
+                        {navLinks.map((link) => (
+                            <li key={link.href}>
+                            <Link
+                                href={link.href}
+                                onClick={() => setIsMenuOpen(false)}
+                                className={cn(
+                                'font-headline text-xl transition-colors hover:text-primary w-full block',
+                                pathname === link.href ? 'text-primary' : 'text-foreground'
+                                )}
+                            >
+                                {link.label}
+                            </Link>
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="p-4 border-t">
+                         <Link href="/login">
+                            <Button variant="outline" className="w-full">
+                                <User className="mr-2 h-4 w-4" />
+                                Admin Login
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </nav>
     </header>
   );
 }
-

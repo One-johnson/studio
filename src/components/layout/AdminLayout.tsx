@@ -14,7 +14,6 @@ import {
   LogOut,
   Loader2,
   ExternalLink,
-  PenSquare
 } from 'lucide-react'
 import {
   SidebarProvider,
@@ -36,7 +35,6 @@ import logo from '@/images/logo.png';
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/photos', label: 'Photos', icon: ImageIcon },
-  { href: '/admin/blog', label: 'Blog', icon: PenSquare },
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
 ]

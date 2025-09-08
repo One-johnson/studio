@@ -57,13 +57,3 @@ export type Testimonial = {
   name: string;
   project: string; // e.g., "Wedding Photography"
 }
-
-export type BlogPost = {
-  id: string;
-  title: string;
-  slug: string;
-  content: string; // HTML content
-  excerpt: string;
-  imageUrl: string;
-  createdAt: Timestamp;
-}

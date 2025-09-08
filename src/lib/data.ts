@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, query, limit, orderBy, where, Timestamp } from 'firebase/firestore';
-import type { Photo, Gallery, Service, AboutContent, HomepageContent, Testimonial, BlogPost } from '@/lib/types';
+import type { Photo, Gallery, Service, AboutContent, HomepageContent, Testimonial } from '@/lib/types';
 
 export async function getPhotos(): Promise<Photo[]> {
   const photosCollection = collection(db, 'photos');
@@ -136,48 +136,4 @@ export async function getTestimonials(): Promise<Testimonial[]> {
     ];
   }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial));
-}
-
-
-export async function getBlogPosts(): Promise<BlogPost[]> {
-    const q = query(collection(db, 'blog-posts'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            // Convert Firestore Timestamp to a serializable format
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-        } as any;
-    }) as BlogPost[];
-}
-
-export async function getRecentBlogPosts(count: number): Promise<BlogPost[]> {
-    const q = query(collection(db, 'blog-posts'), orderBy('createdAt', 'desc'), limit(count));
-    const snapshot = await getDocs(q);
-     return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-        } as any;
-    }) as BlogPost[];
-}
-
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-    const q = query(collection(db, 'blog-posts'), where('slug', '==', slug), limit(1));
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) {
-        return null;
-    }
-
-    const docData = snapshot.docs[0].data();
-    return {
-        id: snapshot.docs[0].id,
-        ...docData,
-        createdAt: (docData.createdAt as Timestamp).toDate().toISOString(),
-    } as any as BlogPost;
 }
