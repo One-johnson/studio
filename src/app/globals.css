@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%; /* Very light gray */
+    --background: 0 0% 98%; /* Light Gray */
     --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
@@ -13,8 +13,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 275 100% 25%; /* Deep Indigo */
-    --primary-foreground: 275 0% 100%;
+    --primary: 45 100% 50%; /* Gold */
+    --primary-foreground: 240 10% 3.9%;
 
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 240 10% 3.9%;
@@ -22,15 +22,15 @@
     --muted: 0 0% 96.1%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 276 98% 86%; /* Muted Lavender */
-    --accent-foreground: 275 100% 25%;
+    --accent: 45 100% 95%; /* Light Gold */
+    --accent-foreground: 45 100% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 275 100% 25%;
+    --ring: 45 100% 50%;
 
     --radius: 0.5rem;
     --chart-1: 12 76% 61%;
@@ -41,12 +41,12 @@
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 275 100% 70%;
-    --sidebar-primary-foreground: 275 100% 25%;
+    --sidebar-primary: 45 100% 60%;
+    --sidebar-primary-foreground: 45 100% 15%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 275 100% 25%;
+    --sidebar-ring: 45 100% 50%;
   }
 
   .dark {
@@ -59,8 +59,8 @@
     --popover: 240 3.7% 15.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 276 98% 86%; /* Muted Lavender as primary in dark mode */
-    --primary-foreground: 275 100% 25%;
+    --primary: 45 100% 50%; /* Gold */
+    --primary-foreground: 45 100% 15%;
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -68,15 +68,15 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 275 100% 25%; /* Deep Indigo as accent in dark mode */
-    --accent-foreground: 0 0% 98%;
+    --accent: 45 100% 15%; /* Dark Gold for accent background */
+    --accent-foreground: 45 100% 90%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 276 98% 86%;
+    --ring: 45 100% 50%;
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -86,12 +86,12 @@
         
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 276 98% 86%;
-    --sidebar-primary-foreground: 275 100% 25%;
+    --sidebar-primary: 45 100% 60%;
+    --sidebar-primary-foreground: 45 100% 15%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 276 98% 86%;
+    --sidebar-ring: 45 100% 50%;
   }
 }
 
