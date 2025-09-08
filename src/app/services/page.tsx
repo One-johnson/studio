@@ -90,12 +90,12 @@ export default function ServicesPage() {
                   <CardTitle className="font-headline text-3xl">{service.title}</CardTitle>
                   <CardDescription className="text-base">{service.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow p-6">
-                  <div className="mb-6">
-                    <span className="text-5xl font-bold font-headline">{service.price}</span>
+                <CardContent className="flex-grow p-4">
+                  <div className="mb-4">
+                    <span className="text-4xl font-bold font-headline">{service.price}</span>
                     {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
                   </div>
-                  <ul className="space-y-4">
+                  <ul className="space-y-3">
                     {getFeatures(service.features).map((feature, i) => (
                       feature && <li key={i} className="flex items-start gap-3">
                         <Check className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
