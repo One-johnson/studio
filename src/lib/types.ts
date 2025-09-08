@@ -41,7 +41,7 @@ export type Service = {
     title: string;
     price: string;
     description: string;
-    features: string[];
+    features: string;
 }
 
 export type Package = {
@@ -49,7 +49,7 @@ export type Package = {
     title: string;
     price: string;
     description: string;
-    features: string[];
+    features: string;
 }
 
 export type Message = {

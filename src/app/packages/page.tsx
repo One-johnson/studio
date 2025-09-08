@@ -33,8 +33,8 @@ export default async function PackagesPage() {
                   <span className="text-4xl font-bold font-headline">{pkg.price}</span>
                 </div>
                 <ul className="space-y-3">
-                  {pkg.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
+                  {pkg.features.split('\n').map((feature, i) => (
+                    feature && <li key={i} className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
                       <span className="text-sm">{feature}</span>
                     </li>

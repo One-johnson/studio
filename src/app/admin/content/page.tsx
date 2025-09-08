@@ -317,7 +317,7 @@ export default function AdminContentPage() {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => appendService({ id: `new-service-${Date.now()}`, title: 'New Service', price: '', description: '', features: [] })}
+                        onClick={() => appendService({ id: `new-service-${Date.now()}`, title: 'New Service', price: '', description: '', features: '' })}
                     >
                         <Plus className="mr-2 h-4 w-4" /> Add Service
                     </Button>
@@ -334,7 +334,7 @@ export default function AdminContentPage() {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => appendPackage({ id: `new-package-${Date.now()}`, title: 'New Package', price: '', description: '', features: [] })}
+                        onClick={() => appendPackage({ id: `new-package-${Date.now()}`, title: 'New Package', price: '', description: '', features: '' })}
                     >
                         <Plus className="mr-2 h-4 w-4" /> Add Package
                     </Button>
@@ -405,25 +405,8 @@ function ServicePackageForm({ type, form, index, onSave, saving }: { type: 'serv
                 <Textarea {...form.register(`${name}.${index}.description`)} rows={3}/>
             </div>
             <div className="space-y-2">
-                <Label>Features</Label>
-                {form.watch(`${name}.${index}.features`, []).map((_: any, featureIndex: number) => (
-                    <div key={featureIndex} className="flex items-center gap-2">
-                        <Input {...form.register(`${name}.${index}.features.${featureIndex}`)} />
-                        <Button variant="ghost" size="icon" onClick={() => {
-                            const currentFeatures = form.getValues(`${name}.${index}.features`);
-                            currentFeatures.splice(featureIndex, 1);
-                            form.setValue(`${name}.${index}.features`, currentFeatures);
-                        }}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => {
-                    const currentFeatures = form.getValues(`${name}.${index}.features`);
-                    form.setValue(`${name}.${index}.features`, [...currentFeatures, '']);
-                }}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Feature
-                </Button>
+                <Label>Features (one per line)</Label>
+                <Textarea {...form.register(`${name}.${index}.features`)} rows={5}/>
             </div>
             <div className="flex gap-2">
                  <Button type="button" size="sm" disabled={saving} onClick={() => onSave(index)}>
@@ -434,7 +417,7 @@ function ServicePackageForm({ type, form, index, onSave, saving }: { type: 'serv
                     serviceTitle={form.watch(`${name}.${index}.title`)}
                     onGenerate={(data) => {
                         form.setValue(`${name}.${index}.description`, data.description);
-                        form.setValue(`${name}.${index}.features`, data.features);
+                        form.setValue(`${name}.${index}.features`, data.features.join('\n'));
                     }}
                 />
             </div>

@@ -86,8 +86,8 @@ export default function ServicesPage() {
                     {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
                   </div>
                   <ul className="space-y-4">
-                    {service.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-3">
+                    {service.features.split('\n').map((feature, i) => (
+                      feature && <li key={i} className="flex items-start gap-3">
                         <Check className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                         <span className="text-base">{feature}</span>
                       </li>
