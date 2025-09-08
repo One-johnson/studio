@@ -7,7 +7,7 @@ import { getPackages } from '@/lib/data';
 import type { Package } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, PlusCircle, Loader2 } from 'lucide-react';
+import { Check, PlusCircle, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -20,6 +20,13 @@ const extras = [
     { title: '2 Days delivery', price: 'GHC 250' },
     { title: '3 Days delivery', price: 'GHC 150' },
 ];
+
+const notes = [
+    "Photoshoots must be done 5 working days ahead of delivery date. This is to provide ample time for editing.",
+    "Selections of Images for retouching should be done by the client upon receipt of initial normally edited pictures.",
+    "Customer is to adhere to the number of images stated in selected package during selection stage.",
+    "Delivery dates stated below will be strictly adhered to, hence customer must endeavor to work with timelines stated in this document."
+]
 
 export default function PackagesPage() {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -137,6 +144,28 @@ export default function PackagesPage() {
                             </li>
                         ))}
                     </ul>
+                </CardContent>
+            </Card>
+        </section>
+
+        <section className="mt-24">
+            <h2 className="text-3xl font-headline text-center mb-12">Please Note</h2>
+            <Card className="max-w-4xl mx-auto bg-primary/5 border-primary/20">
+                <CardHeader>
+                   <CardTitle className="flex items-center gap-2">
+                     <AlertTriangle className="h-6 w-6 text-primary" />
+                     Important Information
+                   </CardTitle>
+                   <CardDescription>The following instructions are for great service delivery.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ol className="list-decimal list-inside space-y-3 text-foreground/80">
+                        {notes.map((note, index) => (
+                            <li key={index}>
+                                {note}
+                            </li>
+                        ))}
+                    </ol>
                 </CardContent>
             </Card>
         </section>
