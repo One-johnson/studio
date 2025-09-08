@@ -1,13 +1,57 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { getServices } from '@/lib/data';
+import type { Service } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
-export default async function ServicesPage() {
-  const services = await getServices();
+export default function ServicesPage() {
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const servicesData = await getServices();
+        setServices(servicesData);
+      } catch (error) {
+        console.error("Failed to fetch services", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+        ease: 'easeOut',
+      },
+    }),
+  };
+
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="container mx-auto px-4 py-16 md:py-24 flex justify-center items-center h-[50vh]">
+          <Loader2 className="h-12 w-12 animate-spin" />
+        </div>
+      </PublicLayout>
+    );
+  }
+  
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-16 md:py-24">
@@ -22,31 +66,41 @@ export default async function ServicesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
           {services.map((service, index) => (
-            <Card key={service.id} className="flex flex-col fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-              <CardHeader>
-                <CardTitle className="font-headline text-2xl">{service.title}</CardTitle>
-                <CardDescription>{service.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <span className="text-4xl font-bold font-headline">{service.price}</span>
-                  {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
-                </div>
-                <ul className="space-y-3">
-                  {service.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button asChild className="w-full font-headline">
-                  <Link href="/contact">Book Now</Link>
-                </Button>
-              </CardFooter>
-            </Card>
+             <motion.div
+              key={service.id}
+              custom={index}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="flex flex-col h-full">
+                <CardHeader>
+                  <CardTitle className="font-headline text-2xl">{service.title}</CardTitle>
+                  <CardDescription>{service.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold font-headline">{service.price}</span>
+                    {service.id === 'event-photography' && <span className="text-sm text-muted-foreground"></span>}
+                  </div>
+                  <ul className="space-y-3">
+                    {service.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild className="w-full font-headline">
+                    <Link href="/contact">Book Now</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>
