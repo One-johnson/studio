@@ -13,17 +13,26 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, getDocs, collection, addDoc, deleteDoc } from 'firebase/firestore';
-import type { AboutContent, Service, HomepageContent, TeamMember, Testimonial } from '@/lib/types';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import type { AboutContent, Service, Package, HomepageContent, TeamMember, Testimonial } from '@/lib/types';
+import { Loader2, Plus, Trash2, Wand2 } from 'lucide-react';
+import { generateServiceDescription } from '@/ai/flows/generate-service-description-flow';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 
 type AboutFormData = {
   about: AboutContent;
-}
+};
 
 type TestimonialsFormData = {
   testimonials: Testimonial[];
 };
 
+type ServicesFormData = {
+  services: Service[];
+};
+
+type PackagesFormData = {
+    packages: Package[];
+}
 
 export default function AdminContentPage() {
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
@@ -33,26 +42,36 @@ export default function AdminContentPage() {
   
   const aboutForm = useForm<AboutFormData>({
     defaultValues: {
-      about: {
-        name: '', bio: '', mission: '', awards: [], imageUrl: '', teamMembers: []
-      }
+      about: { name: '', bio: '', mission: '', awards: [], imageUrl: '', teamMembers: [] }
     }
   });
 
   const testimonialsForm = useForm<TestimonialsFormData>({
-    defaultValues: {
-      testimonials: [],
-    },
+    defaultValues: { testimonials: [] },
   });
   
+  const servicesForm = useForm<ServicesFormData>({
+    defaultValues: { services: [] },
+  });
+
+  const packagesForm = useForm<PackagesFormData>({
+    defaultValues: { packages: [] },
+  })
+
   const { fields: teamMemberFields, append: appendTeamMember, remove: removeTeamMember } = useFieldArray({
-    control: aboutForm.control,
-    name: "about.teamMembers",
+    control: aboutForm.control, name: "about.teamMembers",
   });
   
   const { fields: testimonialFields, append: appendTestimonial, remove: removeTestimonial, update: updateTestimonial } = useFieldArray({
-    control: testimonialsForm.control,
-    name: "testimonials",
+    control: testimonialsForm.control, name: "testimonials",
+  });
+
+  const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
+    control: servicesForm.control, name: "services",
+  });
+
+  const { fields: packageFields, append: appendPackage, remove: removePackage } = useFieldArray({
+    control: packagesForm.control, name: "packages",
   });
 
 
@@ -89,6 +108,15 @@ export default function AdminContentPage() {
         const testimonialsData = testimonialsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial));
         testimonialsForm.reset({ testimonials: testimonialsData });
 
+        const servicesSnapshot = await getDocs(collection(db, 'services'));
+        const servicesData = servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+        servicesForm.reset({ services: servicesData });
+
+        const packagesSnapshot = await getDocs(collection(db, 'packages'));
+        const packagesData = packagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Package));
+        packagesForm.reset({ packages: packagesData });
+
+
       } catch (error) {
         console.error("Error fetching content:", error);
         toast({ title: "Error", description: "Failed to load content.", variant: "destructive" });
@@ -97,7 +125,7 @@ export default function AdminContentPage() {
       }
     }
     fetchData();
-  }, [toast, aboutForm, testimonialsForm]);
+  }, [toast, aboutForm, testimonialsForm, servicesForm, packagesForm]);
 
   const handleAboutSubmit = async (data: AboutFormData) => {
     setSaving(true);
@@ -161,6 +189,32 @@ export default function AdminContentPage() {
       setSaving(false);
     }
   };
+
+  const handleServiceSave = async (index: number) => {
+    const service = servicesForm.getValues().services[index];
+    setSaving(true);
+    try {
+      await setDoc(doc(db, 'services', service.id), service, { merge: true });
+      toast({ title: "Success", description: "Service saved." });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to save service.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePackageSave = async (index: number) => {
+    const pkg = packagesForm.getValues().packages[index];
+    setSaving(true);
+    try {
+      await setDoc(doc(db, 'packages', pkg.id), pkg, { merge: true });
+      toast({ title: "Success", description: "Package saved." });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to save package.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
   
   const handleHomepageChange = (field: keyof HomepageContent, value: string) => {
     if (homepageContent) {
@@ -187,9 +241,11 @@ export default function AdminContentPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="homepage">Homepage</TabsTrigger>
               <TabsTrigger value="about">About</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="packages">Packages</TabsTrigger>
               <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             </TabsList>
             <TabsContent value="homepage" className="mt-6">
@@ -250,6 +306,42 @@ export default function AdminContentPage() {
                   </Button>
               </form>
             </TabsContent>
+            
+             <TabsContent value="services" className="mt-6">
+                <div className="space-y-4">
+                    {serviceFields.map((field, index) => (
+                        <Card key={field.id} className="p-4">
+                            <ServicePackageForm type="service" form={servicesForm} index={index} onSave={handleServiceSave} saving={saving} />
+                        </Card>
+                    ))}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => appendService({ id: `new-service-${Date.now()}`, title: 'New Service', price: '', description: '', features: [] })}
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Add Service
+                    </Button>
+                </div>
+            </TabsContent>
+
+             <TabsContent value="packages" className="mt-6">
+                <div className="space-y-4">
+                    {packageFields.map((field, index) => (
+                        <Card key={field.id} className="p-4">
+                            <ServicePackageForm type="package" form={packagesForm} index={index} onSave={handlePackageSave} saving={saving} />
+                        </Card>
+                    ))}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => appendPackage({ id: `new-package-${Date.now()}`, title: 'New Package', price: '', description: '', features: [] })}
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Add Package
+                    </Button>
+                </div>
+            </TabsContent>
+
+
             <TabsContent value="testimonials" className="mt-6">
                 <div className="space-y-4">
                   {testimonialFields.map((field, index) => (
@@ -289,4 +381,122 @@ export default function AdminContentPage() {
       </Card>
     </AdminLayout>
   );
+}
+
+function ServicePackageForm({ type, form, index, onSave, saving }: { type: 'service' | 'package', form: any, index: number, onSave: (index: number) => void, saving: boolean }) {
+    const name = type === 'service' ? 'services' : 'packages';
+    
+    return (
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label>ID (Cannot be changed)</Label>
+                <Input {...form.register(`${name}.${index}.id`)} disabled />
+            </div>
+            <div className="space-y-2">
+                <Label>Title</Label>
+                <Input {...form.register(`${name}.${index}.title`)} />
+            </div>
+            <div className="space-y-2">
+                <Label>Price</Label>
+                <Input {...form.register(`${name}.${index}.price`)} />
+            </div>
+            <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea {...form.register(`${name}.${index}.description`)} rows={3}/>
+            </div>
+            <div className="space-y-2">
+                <Label>Features</Label>
+                {form.watch(`${name}.${index}.features`, []).map((_: any, featureIndex: number) => (
+                    <div key={featureIndex} className="flex items-center gap-2">
+                        <Input {...form.register(`${name}.${index}.features.${featureIndex}`)} />
+                        <Button variant="ghost" size="icon" onClick={() => {
+                            const currentFeatures = form.getValues(`${name}.${index}.features`);
+                            currentFeatures.splice(featureIndex, 1);
+                            form.setValue(`${name}.${index}.features`, currentFeatures);
+                        }}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                    const currentFeatures = form.getValues(`${name}.${index}.features`);
+                    form.setValue(`${name}.${index}.features`, [...currentFeatures, '']);
+                }}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Feature
+                </Button>
+            </div>
+            <div className="flex gap-2">
+                 <Button type="button" size="sm" disabled={saving} onClick={() => onSave(index)}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save {type === 'service' ? 'Service' : 'Package'}
+                </Button>
+                <GenerateDescriptionDialog
+                    serviceTitle={form.watch(`${name}.${index}.title`)}
+                    onGenerate={(data) => {
+                        form.setValue(`${name}.${index}.description`, data.description);
+                        form.setValue(`${name}.${index}.features`, data.features);
+                    }}
+                />
+            </div>
+        </div>
+    );
+}
+
+
+function GenerateDescriptionDialog({ serviceTitle, onGenerate }: { serviceTitle: string, onGenerate: (data: { description: string, features: string[] }) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [keywords, setKeywords] = useState('');
+    const { toast } = useToast();
+
+    const handleGenerate = async () => {
+        setIsGenerating(true);
+        try {
+            const result = await generateServiceDescription({ title: serviceTitle, keywords });
+            onGenerate(result);
+            toast({ title: "Success", description: "AI-generated content has been added to the form." });
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to generate description:", error);
+            toast({ title: "Error", description: "Could not generate content.", variant: "destructive" });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button type="button" size="sm" variant="outline">
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Generate with AI
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Generate Content</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <p>
+                        Generate a new description and feature list for: <strong>{serviceTitle}</strong>
+                    </p>
+                    <div className="space-y-2">
+                        <Label htmlFor="keywords">Keywords (optional)</Label>
+                        <Input 
+                            id="keywords" 
+                            placeholder="e.g., candid, natural light, outdoor"
+                            value={keywords}
+                            onChange={(e) => setKeywords(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" onClick={handleGenerate} disabled={isGenerating}>
+                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                        Generate
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 }

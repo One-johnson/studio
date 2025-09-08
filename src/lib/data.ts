@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, query, limit, orderBy, where, Timestamp } from 'firebase/firestore';
-import type { Photo, Gallery, Service, AboutContent, HomepageContent, Testimonial } from '@/lib/types';
+import type { Photo, Gallery, Service, AboutContent, HomepageContent, Testimonial, Package } from '@/lib/types';
 
 export async function getPhotos(): Promise<Photo[]> {
   const photosCollection = collection(db, 'photos');
@@ -124,6 +124,31 @@ export async function getServices(): Promise<Service[]> {
     ];
   }
 }
+
+export async function getPackages(): Promise<Package[]> {
+  try {
+    const packagesCollection = collection(db, 'packages');
+    const packagesSnapshot = await getDocs(packagesCollection);
+    
+    if (packagesSnapshot.empty) {
+      return [
+        { id: 'bronze-package', title: 'Bronze Package', price: '$1,200', description: 'Ideal for small weddings or elopements, covering the essentials.', features: ['4 hours coverage', '1 Photographer', 'Online Gallery', '200+ Edited Photos'] },
+        { id: 'gold-package', title: 'Gold Package', price: '$4,500', description: 'Our most popular package, offering full-day coverage and an engagement session.', features: ['8 hours coverage', '2 Photographers', 'Engagement Session', '500+ Edited Photos', 'Custom USB Drive'] },
+        { id: 'platinum-package', title: 'Platinum Package', price: '$7,000', description: 'The ultimate experience with extended coverage, a premium album, and more.', features: ['12 hours coverage', '2 Photographers', 'Engagement Session', '700+ Edited Photos', 'Luxury Wedding Album', 'Parent Albums'] },
+      ];
+    }
+    
+    return packagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Package)).sort((a, b) => a.id.localeCompare(b.id));
+  } catch (error) {
+    console.error("Error fetching packages: ", error);
+    return [
+        { id: 'bronze-package', title: 'Bronze Package', price: '$1,200', description: 'Ideal for small weddings or elopements, covering the essentials.', features: ['4 hours coverage', '1 Photographer', 'Online Gallery', '200+ Edited Photos'] },
+        { id: 'gold-package', title: 'Gold Package', price: '$4,500', description: 'Our most popular package, offering full-day coverage and an engagement session.', features: ['8 hours coverage', '2 Photographers', 'Engagement Session', '500+ Edited Photos', 'Custom USB Drive'] },
+        { id: 'platinum-package', title: 'Platinum Package', price: '$7,000', description: 'The ultimate experience with extended coverage, a premium album, and more.', features: ['12 hours coverage', '2 Photographers', 'Engagement Session', '700+ Edited Photos', 'Luxury Wedding Album', 'Parent Albums'] },
+    ];
+  }
+}
+
 
 export async function getTestimonials(): Promise<Testimonial[]> {
   const testimonialsCollection = collection(db, 'testimonials');

@@ -2,29 +2,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import logo from '@/images/logo.png';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu, X } from 'lucide-react';
+import logo from '@/images/logo.png';
+import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/services', label: 'Packages' },
   { href: '/about', label: 'About' },
+  { href: '/portfolio', label: 'Portfolio' },
+  { href: '/services', label: 'Services' },
+  { href: '/packages', label: 'Packages' },
   { href: '/contact', label: 'Contact' },
 ];
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -32,67 +35,66 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-background/80 backdrop-blur-sm shadow-md' : 'bg-transparent'
-      }`}
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        isScrolled ? 'bg-background/80 backdrop-blur-sm shadow-md' : 'bg-transparent'
+      )}
     >
-      <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src={logo} alt="Clustergh logo" width={80} priority />
-        </Link>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-20">
+          <Link href="/">
+            <Image src={logo} alt="Clustergh logo" width={80} priority />
+          </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-6 md:flex">
-          {navLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`font-headline text-lg transition-colors hover:text-primary ${
-                pathname === href ? 'text-primary' : 'text-foreground'
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden md:flex items-center space-x-6">
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'font-headline text-lg relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300',
+                  pathname === href ? 'text-primary after:w-full' : 'hover:text-primary after:w-0 hover:after:w-full'
+                )}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
 
-        {/* Mobile Nav */}
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu />
-                <span className="sr-only">Open Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <div className="flex h-full flex-col">
-                <div className="mb-8 flex justify-end">
-                  {/* Replaced SheetClose with a styled button inside SheetTrigger for consistent closing behavior */}
-                  <SheetTrigger asChild>
-                     <Button variant="ghost" size="icon">
-                      <X />
-                      <span className="sr-only">Close Menu</span>
-                    </Button>
-                  </SheetTrigger>
+          <div className="md:hidden">
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[250px] bg-background">
+                 <div className="flex justify-between items-center mb-8">
+                     <Link href="/" onClick={() => setIsOpen(false)}>
+                        <Image src={logo} alt="Clustergh logo" width={100} />
+                     </Link>
+                      <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                          <X className="h-6 w-6" />
+                      </Button>
                 </div>
-                <nav className="flex flex-col items-center justify-center gap-8 text-center flex-grow">
+                <nav className="flex flex-col space-y-4">
                   {navLinks.map(({ href, label }) => (
-                     <SheetTrigger asChild key={href}>
-                        <Link
-                        href={href}
-                        className={`font-headline text-3xl transition-colors hover:text-primary ${
-                            pathname === href ? 'text-primary' : 'text-foreground'
-                        }`}
-                        >
-                        {label}
-                        </Link>
-                    </SheetTrigger>
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setIsOpen(false)}
+                      className={cn(
+                        'font-headline text-2xl text-center py-2',
+                        pathname === href ? 'text-primary' : 'hover:text-primary'
+                      )}
+                    >
+                      {label}
+                    </Link>
                   ))}
                 </nav>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>

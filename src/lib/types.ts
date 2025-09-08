@@ -1,3 +1,4 @@
+
 import { Timestamp } from 'firebase/firestore';
 
 export type Photo = {
@@ -36,6 +37,14 @@ export type HomepageContent = {
 };
 
 export type Service = {
+    id: string;
+    title: string;
+    price: string;
+    description: string;
+    features: string[];
+}
+
+export type Package = {
     id: string;
     title: string;
     price: string;
