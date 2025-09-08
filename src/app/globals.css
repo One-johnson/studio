@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    --background: 40 50% 85%; /* Warm Cream from logo */
+    --background: 0 0% 100%; /* White */
     --foreground: 240 10% 3.9%;
 
-    --card: 0 0% 100%;
+    --card: 0 0% 98%; /* Light Gray for cards to stand out */
     --card-foreground: 240 10% 3.9%;
 
     --popover: 0 0% 100%;
@@ -91,7 +91,7 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 180 65% 40%;
+    --sidebar-ring: 180 65% 30%;
   }
 }
 
