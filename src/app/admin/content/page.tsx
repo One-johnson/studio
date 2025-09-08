@@ -17,6 +17,17 @@ import type { AboutContent, Service, Package, HomepageContent, TeamMember, Testi
 import { Loader2, Plus, Trash2, Wand2 } from 'lucide-react';
 import { generateServiceDescription } from '@/ai/flows/generate-service-description-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type AboutFormData = {
   about: AboutContent;
@@ -194,12 +205,39 @@ export default function AdminContentPage() {
     const service = servicesForm.getValues().services[index];
     setSaving(true);
     try {
-      await setDoc(doc(db, 'services', service.id), service, { merge: true });
+      if (service.id.startsWith('new-')) {
+          const { id, ...newService } = service;
+          const docRef = await addDoc(collection(db, 'services'), newService);
+          // Manually update the ID in the form state
+          const currentServices = servicesForm.getValues().services;
+          currentServices[index].id = docRef.id;
+          servicesForm.reset({ services: currentServices });
+      } else {
+          await setDoc(doc(db, 'services', service.id), service, { merge: true });
+      }
       toast({ title: "Success", description: "Service saved." });
     } catch (error) {
       toast({ title: "Error", description: "Failed to save service.", variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleServiceDelete = async (index: number) => {
+    const serviceId = servicesForm.getValues().services[index].id;
+    if (serviceId.startsWith('new-')) {
+        removeService(index);
+        return;
+    }
+    setSaving(true);
+    try {
+        await deleteDoc(doc(db, 'services', serviceId));
+        removeService(index);
+        toast({ title: "Success", description: "Service deleted." });
+    } catch (error) {
+        toast({ title: "Error", description: "Failed to delete service.", variant: "destructive" });
+    } finally {
+        setSaving(false);
     }
   };
 
@@ -311,7 +349,14 @@ export default function AdminContentPage() {
                 <div className="space-y-4">
                     {serviceFields.map((field, index) => (
                         <Card key={field.id} className="p-4">
-                            <ServicePackageForm type="service" form={servicesForm} index={index} onSave={handleServiceSave} saving={saving} />
+                            <ServicePackageForm 
+                                type="service" 
+                                form={servicesForm} 
+                                index={index} 
+                                onSave={handleServiceSave} 
+                                onDelete={handleServiceDelete} 
+                                saving={saving} 
+                            />
                         </Card>
                     ))}
                     <Button
@@ -383,14 +428,23 @@ export default function AdminContentPage() {
   );
 }
 
-function ServicePackageForm({ type, form, index, onSave, saving }: { type: 'service' | 'package', form: any, index: number, onSave: (index: number) => void, saving: boolean }) {
+type ServicePackageFormProps = {
+    type: 'service' | 'package';
+    form: any;
+    index: number;
+    onSave: (index: number) => void;
+    onDelete?: (index: number) => void;
+    saving: boolean;
+};
+
+function ServicePackageForm({ type, form, index, onSave, onDelete, saving }: ServicePackageFormProps) {
     const name = type === 'service' ? 'services' : 'packages';
     
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label>ID (Cannot be changed)</Label>
-                <Input {...form.register(`${name}.${index}.id`)} disabled />
+                <Label>ID (Cannot be changed for existing items)</Label>
+                <Input {...form.register(`${name}.${index}.id`)} disabled={!form.getValues(`${name}.${index}.id`).startsWith('new-')} />
             </div>
             <div className="space-y-2">
                 <Label>Title</Label>
@@ -413,6 +467,30 @@ function ServicePackageForm({ type, form, index, onSave, saving }: { type: 'serv
                     {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save {type === 'service' ? 'Service' : 'Package'}
                 </Button>
+                {onDelete && (
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" size="sm" variant="destructive" disabled={saving}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete this {type}. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(index)}>
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
                 <GenerateDescriptionDialog
                     serviceTitle={form.watch(`${name}.${index}.title`)}
                     onGenerate={(data) => {
