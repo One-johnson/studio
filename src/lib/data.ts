@@ -135,8 +135,8 @@ export async function getPackages(): Promise<Package[]> {
         { id: 'regular', title: 'Regular', price: 'GHC500.00', description: '', features: 'Photoshoot session (up to 30mins)\nUse of ONE Outfit only\n20 plus standard digital images\n5 retouched images ONLY' },
         { id: 'bronze', title: 'Bronze', price: 'GHC 700.00', description: '', features: 'Photoshoot session (up to 1hr)\nUse of ONE-TWO Outfit\n40 plus standard digital images\n8 retouched images ONLY' },
         { id: 'silver', title: 'Silver', price: 'GHC 900.00', description: '', features: 'Photoshoot session (up to 1.3hrs)\nUse of TWO-THREE Outfits\n50 plus standard digital images\n10 retouched images ONLY' },
-        { id: 'gold', title: 'Gold', price: 'GHC 1200.00', description: '', features: 'Photoshoot session (up to 2hrs)\nUse of TWO-FOUR Outhits\n100 plus standard digital images\n15 retouched images ONLY' },
-        { id: 'diamond', title: 'Diamond', price: 'GHC 1700.00', description: '', features: 'Photoshoot session (up to 3hrs)\nUse of TWO-FOUR Outhits\n200 plus standard digital images\n20 retouched images ONLY' },
+        { id: 'gold', title: 'Gold', price: 'GHC 1200.00', description: '', features: 'Photoshoot session (up to 2hrs)\nUse of TWO-FOUR Outifts\n100 plus standard digital images\n15 retouched images ONLY' },
+        { id: 'diamond', title: 'Diamond', price: 'GHC 1700.00', description: '', features: 'Photoshoot session (up to 3hrs)\nUse of TWO-FOUR Outfits\n200 plus standard digital images\n20 retouched images ONLY' },
       ];
     }
     

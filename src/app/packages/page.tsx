@@ -81,18 +81,18 @@ export default function PackagesPage() {
 
   return (
     <PublicLayout>
-      <div className="bg-card">
+      <div className="bg-teal-800">
         <div className="container mx-auto px-4 py-16 md:py-24 text-center">
-          <h1 className="text-3xl md:text-5xl font-headline mb-4">
+          <h1 className="text-3xl md:text-7xl font-headline mb-4 text-white">
             Our Packages
           </h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-lg text-white max-w-3xl mx-auto">
             Choose from one of our thoughtfully crafted packages, designed to provide comprehensive coverage and exceptional value for your most important moments.
           </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-16 md:py-24">
+      <div className="container mx-auto px-4 py-24 md:py-30">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {packages.map((pkg, index) => (
             <motion.div
@@ -133,7 +133,7 @@ export default function PackagesPage() {
         </div>
 
         <section className="mt-24">
-            <h2 className="text-3xl font-headline text-center mb-12">Extras & Add-ons</h2>
+            <h2 className="text-6xl font-headline text-center mb-12">Extras & Add-ons</h2>
             <Card className="max-w-4xl mx-auto">
                 <CardContent className="p-6">
                     <ul className="divide-y divide-border">
@@ -149,7 +149,7 @@ export default function PackagesPage() {
         </section>
 
         <section className="mt-24">
-            <h2 className="text-3xl font-headline text-center mb-12">Please Note</h2>
+            <h2 className="text-4xl font-headline text-center mb-12">Please Note</h2>
             <Card className="max-w-4xl mx-auto bg-primary/5 border-primary/20">
                 <CardHeader>
                    <CardTitle className="flex items-center gap-2">
